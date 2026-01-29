@@ -117,6 +117,9 @@ const I18N = {
     api_test_fail: "اتصال به API ناموفق بود.",
     api_test_word_ok: "تست لغت موفق: {word}",
     api_test_word_fail: "تست لغت ناموفق بود.",
+    api_test_all_start: "در حال تست همه مدل‌ها...",
+    api_test_all_done: "مدل‌های پیشنهادی: {models}",
+    api_test_all_none: "هیچ مدل موفقی یافت نشد.",
     sync_all_none: "همه لغت‌ها کامل هستند.",
     sync_in_progress: "در حال سینک {count} لغت در یک درخواست...",
     sync_done: "سینک تمام شد.",
@@ -222,6 +225,9 @@ const I18N = {
     api_test_fail: "API connection failed.",
     api_test_word_ok: "Word test ok: {word}",
     api_test_word_fail: "Word test failed.",
+    api_test_all_start: "Testing all models...",
+    api_test_all_done: "Recommended models: {models}",
+    api_test_all_none: "No model passed the tests.",
     sync_all_none: "All words are complete.",
     sync_in_progress: "Syncing {count} words in one request...",
     sync_done: "Sync complete.",
@@ -327,6 +333,9 @@ const I18N = {
     api_test_fail: "API-verbinding mislukt.",
     api_test_word_ok: "Woordtest ok: {word}",
     api_test_word_fail: "Woordtest mislukt.",
+    api_test_all_start: "Bezig met alle modellen testen...",
+    api_test_all_done: "Aanbevolen modellen: {models}",
+    api_test_all_none: "Geen model geslaagd.",
     sync_all_none: "Alle woorden zijn compleet.",
     sync_in_progress: "Bezig met {count} woorden in één verzoek...",
     sync_done: "Synchronisatie voltooid.",
@@ -391,6 +400,8 @@ const elements = {
   apiTest: document.getElementById("apiTest"),
   apiTestStatus: document.getElementById("apiTestStatus"),
   apiTestResult: document.getElementById("apiTestResult"),
+  apiTestAll: document.getElementById("apiTestAll"),
+  apiTestAllStatus: document.getElementById("apiTestAllStatus"),
   languageSelect: document.getElementById("languageSelect"),
   saveSettings: document.getElementById("saveSettings"),
   driveClientId: document.getElementById("driveClientId"),
@@ -608,6 +619,12 @@ function wireEvents() {
   if (elements.apiTest) {
     elements.apiTest.addEventListener("click", async () => {
       await testApiConnection();
+    });
+  }
+
+  if (elements.apiTestAll) {
+    elements.apiTestAll.addEventListener("click", async () => {
+      await testAllModels();
     });
   }
 
@@ -1640,6 +1657,7 @@ async function testApiConnection() {
   }
   try {
     setApiTestResult("");
+    setApiTestAllStatus("");
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(
         apiKey
@@ -1669,6 +1687,47 @@ async function testApiConnection() {
   } catch (error) {
     console.error(error);
     setApiTestStatus(error.message || t("api_test_fail"));
+  }
+}
+
+async function testAllModels() {
+  const apiKey = elements.apiKey?.value?.trim();
+  if (!apiKey) {
+    setApiTestAllStatus(t("api_key_required"));
+    return;
+  }
+  if (!elements.modelName) return;
+
+  const models = Array.from(elements.modelName.options).map((opt) => opt.value);
+  if (!models.length) {
+    setApiTestAllStatus(t("api_test_all_none"));
+    return;
+  }
+
+  setApiTestAllStatus(t("api_test_all_start"));
+  const previousModel = state.settings.model;
+  const passing = [];
+  for (const model of models) {
+    try {
+      state.settings.model = model;
+      elements.modelName.value = model;
+      const meaning = await generateCardBatchData(["example"]);
+      const spelling = await correctWordsBatch(["example"]);
+      if (Array.isArray(meaning) && meaning.length && Array.isArray(spelling)) {
+        passing.push(model);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  state.settings.model = previousModel;
+  elements.modelName.value = previousModel;
+
+  if (passing.length) {
+    setApiTestAllStatus(t("api_test_all_done", { models: passing.join(", ") }));
+  } else {
+    setApiTestAllStatus(t("api_test_all_none"));
   }
 }
 
@@ -1987,6 +2046,15 @@ function setApiTestResult(message) {
   setApiTestResult.timeoutId = window.setTimeout(() => {
     elements.apiTestResult.textContent = "";
   }, 8000);
+}
+
+function setApiTestAllStatus(message) {
+  if (!elements.apiTestAllStatus) return;
+  elements.apiTestAllStatus.textContent = message;
+  window.clearTimeout(setApiTestAllStatus.timeoutId);
+  setApiTestAllStatus.timeoutId = window.setTimeout(() => {
+    elements.apiTestAllStatus.textContent = "";
+  }, 12000);
 }
 
 function signInWithGoogle() {
