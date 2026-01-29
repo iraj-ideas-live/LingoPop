@@ -113,6 +113,10 @@ const I18N = {
     cards_invalid: "فرمت فایل کارت‌ها معتبر نیست.",
     settings_saved: "تنظیمات ذخیره شد.",
     api_key_required: "لطفا کلید API را در تنظیمات وارد کنید.",
+    api_test_ok: "اتصال به API موفق بود.",
+    api_test_fail: "اتصال به API ناموفق بود.",
+    api_test_word_ok: "تست لغت موفق: {word}",
+    api_test_word_fail: "تست لغت ناموفق بود.",
     sync_all_none: "همه لغت‌ها کامل هستند.",
     sync_in_progress: "در حال سینک {count} لغت در یک درخواست...",
     sync_done: "سینک تمام شد.",
@@ -214,6 +218,10 @@ const I18N = {
     cards_invalid: "Invalid cards JSON format.",
     settings_saved: "Settings saved.",
     api_key_required: "Please enter API key in settings.",
+    api_test_ok: "API connection successful.",
+    api_test_fail: "API connection failed.",
+    api_test_word_ok: "Word test ok: {word}",
+    api_test_word_fail: "Word test failed.",
     sync_all_none: "All words are complete.",
     sync_in_progress: "Syncing {count} words in one request...",
     sync_done: "Sync complete.",
@@ -315,6 +323,10 @@ const I18N = {
     cards_invalid: "Ongeldig kaarten-JSON formaat.",
     settings_saved: "Instellingen opgeslagen.",
     api_key_required: "Vul de API-sleutel in bij instellingen.",
+    api_test_ok: "API-verbinding geslaagd.",
+    api_test_fail: "API-verbinding mislukt.",
+    api_test_word_ok: "Woordtest ok: {word}",
+    api_test_word_fail: "Woordtest mislukt.",
     sync_all_none: "Alle woorden zijn compleet.",
     sync_in_progress: "Bezig met {count} woorden in één verzoek...",
     sync_done: "Synchronisatie voltooid.",
@@ -375,6 +387,10 @@ const elements = {
   practiceProgress: document.getElementById("practiceProgress"),
   apiKey: document.getElementById("apiKey"),
   modelName: document.getElementById("modelName"),
+  modelStatus: document.getElementById("modelStatus"),
+  apiTest: document.getElementById("apiTest"),
+  apiTestStatus: document.getElementById("apiTestStatus"),
+  apiTestResult: document.getElementById("apiTestResult"),
   languageSelect: document.getElementById("languageSelect"),
   saveSettings: document.getElementById("saveSettings"),
   driveClientId: document.getElementById("driveClientId"),
@@ -424,6 +440,9 @@ function init() {
   }
   if (elements.customShelfLanguage) {
     elements.customShelfLanguage.value = state.settings.language || "fa";
+  }
+  if (elements.apiKey.value) {
+    loadModelsList();
   }
   ensureShelves();
   elements.driveClientId.value = state.settings.driveClientId;
@@ -584,6 +603,13 @@ function wireEvents() {
     applyLanguage();
     setStatus(t("settings_saved"));
   });
+
+
+  if (elements.apiTest) {
+    elements.apiTest.addEventListener("click", async () => {
+      await testApiConnection();
+    });
+  }
 
   if (elements.languageSelect) {
     elements.languageSelect.addEventListener("change", (event) => {
@@ -1552,11 +1578,98 @@ function extractJsonFromText(text) {
 }
 
 function buildApiError(context, status, raw) {
-  const cleaned = String(raw || "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 180);
-  return `${context} error (${status}): ${cleaned || "Empty response"}`;
+  const code = status || "API";
+  return `خطا در ارتباط با API (${code})`;
+}
+
+async function loadModelsList(showMessage = false) {
+  const apiKey = elements.apiKey?.value?.trim();
+  if (!apiKey || !elements.modelName) return;
+  try {
+    const current = elements.modelName.value;
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(
+        apiKey
+      )}`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(buildApiError("Models", response.status, errorText));
+    }
+    const data = await response.json();
+    const models = (data.models || [])
+      .filter((model) => model.supportedGenerationMethods?.includes("generateContent"))
+      .map((model) => model.name?.replace("models/", ""))
+      .filter(Boolean);
+    if (!models.length) {
+      if (showMessage) setModelStatus("مدلی یافت نشد.");
+      return;
+    }
+    elements.modelName.innerHTML = "";
+    models.forEach((model) => {
+      const option = document.createElement("option");
+      option.value = model;
+      option.textContent = model;
+      elements.modelName.appendChild(option);
+    });
+    if (current && models.includes(current)) {
+      elements.modelName.value = current;
+    } else if (models.includes("gemini-flash-latest")) {
+      elements.modelName.value = "gemini-flash-latest";
+    } else {
+      elements.modelName.value = models[0];
+    }
+    state.settings.model = elements.modelName.value;
+    saveState();
+    if (showMessage) setModelStatus("مدل‌ها به‌روزرسانی شد.");
+  } catch (error) {
+    console.error(error);
+    if (showMessage) setModelStatus(error.message || t("sync_error"));
+  }
+}
+
+async function testApiConnection() {
+  const apiKey = elements.apiKey?.value?.trim();
+  if (!apiKey) {
+    setApiTestStatus(t("api_key_required"));
+    return;
+  }
+  try {
+    setApiTestResult("");
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(
+        apiKey
+      )}`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(buildApiError("Models", response.status, errorText));
+    }
+    setApiTestStatus(t("api_test_ok"));
+    try {
+      const testWord = "example";
+      const data = await generateCardBatchData([testWord]);
+      if (Array.isArray(data) && data.length) {
+        setApiTestResult(t("api_test_word_ok", { word: testWord }));
+      } else {
+        setApiTestResult(t("api_test_word_fail"));
+      }
+    } catch (error) {
+      console.error(error);
+      setApiTestResult(error.message || t("api_test_word_fail"));
+    }
+  } catch (error) {
+    console.error(error);
+    setApiTestStatus(error.message || t("api_test_fail"));
+  }
 }
 
 function isCardComplete(item) {
@@ -1847,6 +1960,33 @@ function setCustomShelfStatus(message) {
   setCustomShelfStatus.timeoutId = window.setTimeout(() => {
     elements.customShelfStatus.textContent = "";
   }, 6000);
+}
+
+function setModelStatus(message) {
+  if (!elements.modelStatus) return;
+  elements.modelStatus.textContent = message;
+  window.clearTimeout(setModelStatus.timeoutId);
+  setModelStatus.timeoutId = window.setTimeout(() => {
+    elements.modelStatus.textContent = "";
+  }, 6000);
+}
+
+function setApiTestStatus(message) {
+  if (!elements.apiTestStatus) return;
+  elements.apiTestStatus.textContent = message;
+  window.clearTimeout(setApiTestStatus.timeoutId);
+  setApiTestStatus.timeoutId = window.setTimeout(() => {
+    elements.apiTestStatus.textContent = "";
+  }, 6000);
+}
+
+function setApiTestResult(message) {
+  if (!elements.apiTestResult) return;
+  elements.apiTestResult.textContent = message;
+  window.clearTimeout(setApiTestResult.timeoutId);
+  setApiTestResult.timeoutId = window.setTimeout(() => {
+    elements.apiTestResult.textContent = "";
+  }, 8000);
 }
 
 function signInWithGoogle() {

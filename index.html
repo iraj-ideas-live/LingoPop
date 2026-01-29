@@ -135,7 +135,6 @@
           <button id="settingsBack" class="icon-button circle-button hidden" aria-label="Back">
             <i class="fa-solid fa-arrow-left"></i>
           </button>
-          <h2 class="section-title">تنظیمات</h2>
         </div>
         <div id="settingsMenu" class="settings-menu">
           <button class="settings-item" data-settings-target="google-api">
@@ -149,6 +148,10 @@
           <button class="settings-item" data-settings-target="json">
             <i class="fa-solid fa-file-lines"></i>
             ورود و خروجی JSON
+          </button>
+          <button class="settings-item" data-settings-target="language">
+            <i class="fa-solid fa-language"></i>
+            زبان برنامه
           </button>
           <button class="settings-item" data-settings-target="theme">
             <i class="fa-solid fa-palette"></i>
@@ -169,6 +172,10 @@
           <button class="settings-item" data-settings-target="card-theme">
             <i class="fa-solid fa-id-card"></i>
             تم کارت‌های لغت
+          </button>
+          <button class="settings-item" data-settings-target="error-guide">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            راهنمای خطاها
           </button>
           <button class="settings-item" data-settings-target="about">
             <i class="fa-solid fa-circle-info"></i>
@@ -198,6 +205,25 @@
               <option value="gemini-1.0-pro">gemini-1.0-pro</option>
             </select>
           </label>
+          <div class="row">
+            <div id="modelStatus" class="status"></div>
+          </div>
+          <p class="hint" data-i18n="google_api_hint">
+            این برنامه از Google Generative Language API استفاده می‌کند تا برای هر لغت
+            معنی فارسی، معنی انگلیسی، جمله نمونه و هم‌معنی‌ها را تولید کند.
+          </p>
+          <div class="row">
+            <button id="apiTest" class="icon-button">تست</button>
+            <div id="apiTestStatus" class="status"></div>
+            <div id="apiTestResult" class="status"></div>
+          </div>
+          <button id="saveSettings" class="primary" data-i18n="save_settings">
+            ذخیره تنظیمات
+          </button>
+        </div>
+
+        <div class="card settings-page" data-settings-page="language">
+          <h2 data-i18n="language_label">زبان</h2>
           <label class="field">
             <span data-i18n="language_label">زبان</span>
             <select id="languageSelect">
@@ -206,13 +232,6 @@
               <option value="nl">Nederlands</option>
             </select>
           </label>
-          <p class="hint" data-i18n="google_api_hint">
-            این برنامه از Google Generative Language API استفاده می‌کند تا برای هر لغت
-            معنی فارسی، معنی انگلیسی، جمله نمونه و هم‌معنی‌ها را تولید کند.
-          </p>
-          <button id="saveSettings" class="primary" data-i18n="save_settings">
-            ذخیره تنظیمات
-          </button>
         </div>
 
         <div class="card settings-page" data-settings-page="drive">
@@ -412,6 +431,28 @@
                 </div>
               </div>
               <p class="hint" data-i18n="card_preview_hint">پیش‌نمایش کارت لغت</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card settings-page" data-settings-page="error-guide">
+          <h2>راهنمای کدهای خطا</h2>
+          <div class="word-meta">
+            <div class="word-meta-item">
+              <span class="meta-label">429</span>
+              <span class="meta-value dir-rtl">سهمیه یا محدودیت درخواست‌ها تمام شده است.</span>
+            </div>
+            <div class="word-meta-item">
+              <span class="meta-label">401 / 403</span>
+              <span class="meta-value dir-rtl">کلید API نامعتبر است یا دسترسی ندارید.</span>
+            </div>
+            <div class="word-meta-item">
+              <span class="meta-label">400</span>
+              <span class="meta-value dir-rtl">درخواست نامعتبر است یا ورودی‌ها ناقص هستند.</span>
+            </div>
+            <div class="word-meta-item">
+              <span class="meta-label">500</span>
+              <span class="meta-value dir-rtl">خطای داخلی سرویس. کمی بعد دوباره تلاش کنید.</span>
             </div>
           </div>
         </div>
