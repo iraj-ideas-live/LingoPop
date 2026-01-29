@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LingoPop - تمرین لغت با G5</title>
+    <link rel="icon" type="image/png" href="apple-touch-icon.png" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="text/javascript">
+      (function (c, l, a, r, i, t, y) {
+        c[a] =
+          c[a] ||
+          function () {
+            (c[a].q = c[a].q || []).push(arguments);
+          };
+        t = l.createElement(r);
+        t.async = 1;
+        t.src = "https://www.clarity.ms/tag/" + i;
+        y = l.getElementsByTagName(r)[0];
+        y.parentNode.insertBefore(t, y);
+      })(window, document, "clarity", "script", "v974196dl8");
+    </script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>LingoPop</h1>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab-button active" data-tab="words" data-i18n="tab_words">
+        لغت‌ها
+      </button>
+      <button class="tab-button" data-tab="practice" data-i18n="tab_practice">
+        تمرین
+      </button>
+      <button class="tab-button" data-tab="settings" data-i18n="tab_settings">
+        تنظیمات
+      </button>
+    </nav>
+
+    <main>
+      <section class="tab-panel active" id="words">
+        <div class="card">
+          <h2 data-i18n="add_word_title">افزودن لغت</h2>
+          <div class="row">
+            <textarea
+              id="wordInput"
+              placeholder="هر خط یک لغت"
+              data-i18n-placeholder="add_word_placeholder"
+            ></textarea>
+            <button id="addWords" data-i18n="add_word_btn">افزودن</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row space-between">
+            <h2>شلف‌ها</h2>
+            <select id="shelfSelect"></select>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row space-between words-header">
+            <h2 class="section-title" data-i18n="vocabulary_title">Vocabulary</h2>
+            <div class="row words-actions">
+              <button id="syncWords" class="icon-button primary circle-button" aria-label="Sync">
+                <i class="fa-solid fa-rotate"></i>
+                <span class="sync-label" data-i18n="sync_label">دریافت معنی</span>
+              </button>
+            </div>
+          </div>
+          <div id="syncStatus" class="status"></div>
+          <div id="wordList" class="word-list"></div>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="practice">
+        <div class="card">
+          <div id="practiceEmpty" class="empty-state" data-i18n="practice_empty">
+            هنوز هیچ لغتی اضافه نشده است.
+          </div>
+          <div id="practiceCard" class="practice-card hidden">
+            <div class="g5-boxes">
+              <button class="g5-box reset" data-box="all">
+                <i class="fa-solid fa-layer-group"></i>
+                <span data-i18n="g5_all">All</span>
+              </button>
+              <div id="g5Boxes" class="g5-boxes-inner"></div>
+            </div>
+            <div id="g5Counts" class="g5-counts"></div>
+            <div class="practice-flip" id="practiceFlip">
+              <div class="practice-flip-inner">
+                <div class="practice-face practice-front">
+                  <div class="word-item practice-word-card" id="practiceFrontCard">
+                    <header class="word-header">
+                      <h3 class="word-title dir-ltr" id="practiceWord"></h3>
+                    </header>
+                  </div>
+                </div>
+                <div class="practice-face practice-back">
+                  <div class="word-item practice-word-card" id="practiceDetails"></div>
+                </div>
+              </div>
+            </div>
+            <div class="practice-progress-bar">
+              <div id="practiceProgressFill" class="practice-progress-fill"></div>
+            </div>
+            <div class="practice-actions">
+              <button id="markKnown" class="primary" data-i18n="practice_known">
+                بلدم
+              </button>
+              <button id="markUnknown" data-i18n="practice_unknown">
+                نمی‌دونم
+              </button>
+            </div>
+            <div class="practice-progress" id="practiceProgress"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="settings">
+        <div class="settings-header">
+          <button id="settingsBack" class="icon-button circle-button hidden" aria-label="Back">
+            <i class="fa-solid fa-arrow-left"></i>
+          </button>
+          <h2 class="section-title">تنظیمات</h2>
+        </div>
+        <div id="settingsMenu" class="settings-menu">
+          <button class="settings-item" data-settings-target="google-api">
+            <i class="fa-solid fa-key"></i>
+            تنظیمات Google API
+          </button>
+          <button class="settings-item" data-settings-target="drive">
+            <i class="fa-brands fa-google-drive"></i>
+            سینک با Google Drive
+          </button>
+          <button class="settings-item" data-settings-target="json">
+            <i class="fa-solid fa-file-lines"></i>
+            ورود و خروجی JSON
+          </button>
+          <button class="settings-item" data-settings-target="theme">
+            <i class="fa-solid fa-palette"></i>
+            نمای ظاهری
+          </button>
+          <button class="settings-item" data-settings-target="practice">
+            <i class="fa-solid fa-dumbbell"></i>
+            تنظیمات تمرین
+          </button>
+          <button class="settings-item" data-settings-target="shelves">
+            <i class="fa-solid fa-layer-group"></i>
+            مدیریت شلف‌ها
+          </button>
+          <button class="settings-item" data-settings-target="custom-shelf">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            شلف اختصاصی
+          </button>
+          <button class="settings-item" data-settings-target="card-theme">
+            <i class="fa-solid fa-id-card"></i>
+            تم کارت‌های لغت
+          </button>
+          <button class="settings-item" data-settings-target="about">
+            <i class="fa-solid fa-circle-info"></i>
+            درباره نرم‌افزار
+          </button>
+        </div>
+
+        <div class="card settings-page" data-settings-page="google-api">
+          <h2 data-i18n="google_api_settings">تنظیمات Google API</h2>
+          <label class="field">
+            <span data-i18n="api_key_label">کلید API</span>
+            <input
+              id="apiKey"
+              type="password"
+              placeholder="Google API Key"
+              data-i18n-placeholder="api_key_placeholder"
+            />
+          </label>
+          <label class="field">
+            <span data-i18n="model_label">مدل</span>
+            <select id="modelName">
+              <option value="gemini-flash-latest" selected>gemini-flash-latest</option>
+              <option value="gemini-pro-latest">gemini-pro-latest</option>
+              <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+              <option value="gemini-1.5-flash-8b">gemini-1.5-flash-8b</option>
+              <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+              <option value="gemini-1.0-pro">gemini-1.0-pro</option>
+            </select>
+          </label>
+          <label class="field">
+            <span data-i18n="language_label">زبان</span>
+            <select id="languageSelect">
+              <option value="fa">فارسی</option>
+              <option value="en">English</option>
+              <option value="nl">Nederlands</option>
+            </select>
+          </label>
+          <p class="hint" data-i18n="google_api_hint">
+            این برنامه از Google Generative Language API استفاده می‌کند تا برای هر لغت
+            معنی فارسی، معنی انگلیسی، جمله نمونه و هم‌معنی‌ها را تولید کند.
+          </p>
+          <button id="saveSettings" class="primary" data-i18n="save_settings">
+            ذخیره تنظیمات
+          </button>
+        </div>
+
+        <div class="card settings-page" data-settings-page="drive">
+          <h2 data-i18n="drive_sync_title">سینک با Google Drive</h2>
+          <label class="field">
+            <span data-i18n="drive_client_id">Client ID</span>
+            <input
+              id="driveClientId"
+              type="text"
+              placeholder="Google OAuth Client ID"
+              data-i18n-placeholder="drive_client_placeholder"
+            />
+          </label>
+          <p class="hint" data-i18n="drive_client_help">
+            راهنمای دریافت Client ID:
+            1) وارد Google Cloud Console شوید.
+            2) یک پروژه بسازید یا انتخاب کنید.
+            3) به APIs &amp; Services &gt; OAuth consent screen بروید و آن را تنظیم کنید.
+            4) به APIs &amp; Services &gt; Credentials بروید و Create Credentials &gt; OAuth client ID را بزنید.
+            5) Application type را روی Web قرار دهید.
+            6) در Authorized JavaScript origins آدرس این برنامه را بگذارید (مثلا http://localhost).
+            7) Client ID ساخته شده را اینجا وارد کنید.
+          </p>
+          <label class="field">
+            <span data-i18n="drive_file_name">نام فایل در Drive</span>
+            <input id="driveFileName" type="text" value="lingopop-cards.json" />
+          </label>
+          <label class="field">
+            <span data-i18n="drive_file_id">File ID (اختیاری)</span>
+            <input
+              id="driveFileId"
+              type="text"
+              placeholder="اگر فایل را دارید وارد کنید"
+              data-i18n-placeholder="drive_file_id_placeholder"
+            />
+          </label>
+          <div class="row">
+            <button id="driveLogin" data-i18n="drive_login">ورود با گوگل</button>
+            <button id="driveSync" class="primary" data-i18n="drive_sync">
+              سینک با Drive
+            </button>
+          </div>
+          <div id="driveStatus" class="status"></div>
+        </div>
+
+        <div class="card settings-page" data-settings-page="json">
+          <h2 data-i18n="json_section">ورود و خروجی JSON</h2>
+          <div class="row">
+            <input type="file" id="jsonFile" accept="application/json" />
+            <button id="importJson" data-i18n="json_import">ورود فایل</button>
+          </div>
+          <p class="hint" data-i18n="json_import_hint">
+            فرمت ورود: آرایه‌ای از رشته‌ها یا اشیاء با کلید word
+          </p>
+          <div class="row">
+            <button id="exportJson" data-i18n="json_export">خروجی کامل کارت‌ها</button>
+          </div>
+          <div class="row">
+            <input type="file" id="cardsJsonFile" accept="application/json" />
+            <button id="importCards" data-i18n="cards_import">ورود کارت‌های کامل</button>
+          </div>
+          <p class="hint" data-i18n="cards_import_hint">
+            فرمت: آرایه‌ای از کارت‌ها با فیلد word. کارت‌های تکراری اضافه نمی‌شوند.
+          </p>
+        </div>
+
+        <div class="card settings-page" data-settings-page="theme">
+          <h2 data-i18n="theme_title">نمای ظاهری</h2>
+          <div class="theme-chips" id="themeChips">
+            <button class="theme-chip" data-theme="clean">Clean</button>
+            <button class="theme-chip" data-theme="soft">Soft UI</button>
+            <button class="theme-chip" data-theme="sepia">Sepia</button>
+            <button class="theme-chip" data-theme="chocolate">Chocolate</button>
+            <button class="theme-chip" data-theme="pastel">Pastel Minimal</button>
+            <button class="theme-chip" data-theme="neo">Neo-Brutalism</button>
+            <button class="theme-chip" data-theme="glass">Glassmorphism</button>
+            <button class="theme-chip" data-theme="cyber">Cyberpunk</button>
+            <button class="theme-chip" data-theme="neumorph">Neumorphism</button>
+          </div>
+        </div>
+
+        <div class="card settings-page" data-settings-page="practice">
+          <h2 data-i18n="practice_settings_title">تنظیمات تمرین</h2>
+          <label class="field switch-field">
+            <input id="stickyPracticeButtons" type="checkbox" checked />
+            <span class="switch-ui"></span>
+            <span data-i18n="sticky_buttons_label">
+              چسباندن دکمه‌های تمرین در پایین صفحه
+            </span>
+          </label>
+        </div>
+
+        <div class="card settings-page" data-settings-page="shelves">
+          <h2>مدیریت شلف‌ها</h2>
+          <div class="row">
+            <input id="shelfName" type="text" placeholder="نام شلف" />
+            <button id="addShelf">افزودن شلف</button>
+          </div>
+          <div id="shelfList" class="shelf-list"></div>
+        </div>
+
+        <div class="card settings-page" data-settings-page="custom-shelf">
+          <h2>شلف اختصاصی</h2>
+          <label class="field">
+            <span>نام شلف</span>
+            <input id="customShelfName" type="text" placeholder="مثلا تجربه کاربر" />
+          </label>
+          <label class="field">
+            <span>توضیح</span>
+            <input
+              id="customShelfDescription"
+              type="text"
+              placeholder="مثلا لغت‌های تخصصی تجربه کاربر"
+            />
+          </label>
+          <label class="field">
+            <span>سطح</span>
+            <select id="customShelfLevel">
+              <option value="beginner">مبتدی</option>
+              <option value="intermediate">متوسط</option>
+              <option value="advanced">پیشرفته</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>زبان لغت‌ها</span>
+            <select id="customShelfLanguage">
+              <option value="fa">فارسی</option>
+              <option value="en">English</option>
+              <option value="nl">Nederlands</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>تعداد لغت</span>
+            <input id="customShelfCount" type="number" min="5" max="200" value="30" />
+          </label>
+          <button id="createCustomShelf" class="primary">ایجاد شلف و افزودن لغت‌ها</button>
+          <p class="hint">برای ساخت شلف اختصاصی، کلید API باید تنظیم شده باشد.</p>
+          <div id="customShelfStatus" class="status"></div>
+        </div>
+
+        <div class="card settings-page" data-settings-page="card-theme">
+          <h2 data-i18n="card_theme_title">تم کارت‌های لغت</h2>
+          <div class="theme-card-layout">
+            <div class="theme-chips" id="cardThemeChips">
+              <button class="theme-chip" data-card-theme="inherit">طبق تم کلی</button>
+              <button class="theme-chip" data-card-theme="clean">Clean</button>
+              <button class="theme-chip" data-card-theme="soft">Soft UI</button>
+              <button class="theme-chip" data-card-theme="soft-custom">Soft UI Custom</button>
+              <button class="theme-chip" data-card-theme="sepia">Sepia</button>
+              <button class="theme-chip" data-card-theme="chocolate">Chocolate</button>
+              <button class="theme-chip" data-card-theme="pastel">Pastel Minimal</button>
+              <button class="theme-chip" data-card-theme="neo">Neo-Brutalism</button>
+              <button class="theme-chip" data-card-theme="glass">Glassmorphism</button>
+              <button class="theme-chip" data-card-theme="cyber">Cyberpunk</button>
+              <button class="theme-chip" data-card-theme="neumorph">Neumorphism</button>
+            </div>
+            <div class="theme-preview">
+              <div class="theme-controls hidden" id="cardThemeControls">
+                <label class="field">
+                  <span>رنگ تیتر</span>
+                  <input id="cardTitleColor" type="color" value="#2f2f37" />
+                </label>
+                <label class="field">
+                  <span>رنگ متن اصلی</span>
+                  <input id="cardTextColor" type="color" value="#3f3f4a" />
+                </label>
+                <label class="field">
+                  <span>رنگ پس‌زمینه کارت</span>
+                  <input id="cardBgColor" type="color" value="#ffffff" />
+                </label>
+              </div>
+              <div class="word-item preview-card" id="cardThemePreview">
+                <header class="word-header">
+                  <h3 class="word-title dir-ltr">example</h3>
+                </header>
+                <div class="word-meta">
+                  <div class="word-meta-item">
+                    <span class="meta-label" data-i18n="meaning_target">معنی:</span>
+                    <span class="meta-value dir-rtl" data-i18n="sample_meaning_fa" data-dir="target">نمونه</span>
+                  </div>
+                  <div class="word-meta-item meaning-english-block" data-show-english>
+                    <span class="meta-label" data-i18n="meaning_english">معنی انگلیسی:</span>
+                    <span class="meta-value dir-ltr" data-i18n="sample_meaning_en">sample</span>
+                  </div>
+                  <div class="word-meta-item">
+                    <span class="meta-label" data-i18n="pronunciation">تلفظ:</span>
+                    <span class="meta-value dir-ltr" data-i18n="sample_pronunciation">/ˈsæm.pəl/</span>
+                  </div>
+                  <div class="word-meta-item">
+                    <span class="meta-label" data-i18n="example">جمله:</span>
+                    <span class="meta-value dir-ltr" data-i18n="sample_sentence">This is a sample sentence.</span>
+                  </div>
+                  <div class="word-meta-item">
+                    <span class="meta-label" data-i18n="synonyms">هم‌معنی‌ها:</span>
+                    <span class="meta-value dir-ltr" data-i18n="sample_synonyms">example, instance</span>
+                  </div>
+                </div>
+              </div>
+              <p class="hint" data-i18n="card_preview_hint">پیش‌نمایش کارت لغت</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card settings-page" data-settings-page="about">
+          <img
+            class="about-logo"
+            src="apple-touch-icon.png"
+            alt="LingoPop"
+            width="64"
+            height="64"
+          />
+          <h2 data-i18n="about_title">درباره نرم‌افزار</h2>
+          <p class="about-text" data-i18n="about_text">
+            LingoPop یک برنامه ساده و سبک برای مدیریت لغت، ساخت کارت‌های آموزشی و
+            تمرین با جعبه‌های G5 است. شما می‌توانید لغت‌ها را دستی یا از طریق فایل
+            JSON وارد کنید، با Google API برای هر لغت معنی فارسی، معنی انگلیسی،
+            تلفظ، جمله نمونه و هم‌معنی‌ها تولید کنید و سپس در تب تمرین آن‌ها را
+            مرور کنید. همه داده‌ها به‌صورت محلی ذخیره می‌شوند و در صورت نیاز
+            می‌توانید کارت‌ها را با فایل موجود در Google Drive نیز سینک کنید.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
