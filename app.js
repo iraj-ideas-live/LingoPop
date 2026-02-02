@@ -9,7 +9,7 @@ const defaultState = {
     driveClientId: "",
     driveFileName: "lingopop-cards.json",
     driveFileId: "",
-    theme: "clean",
+    theme: "sepia",
     cardTheme: "inherit",
     cardCustom: {
       titleColor: "#2f2f37",
