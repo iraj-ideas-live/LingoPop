@@ -256,6 +256,21 @@
               برای جلوگیری از خطای API مقدار کمتر انتخاب کنید (مثلا ۱۵ تا ۲۵).
             </small>
           </label>
+          <label class="field">
+            <span data-i18n="cooldown_label">زمان کول‌دان (ثانیه)</span>
+            <input
+              id="cooldownSeconds"
+              type="number"
+              min="0"
+              max="30"
+              step="1"
+              placeholder="2"
+              data-i18n-placeholder="cooldown_placeholder"
+            />
+            <small class="hint" data-i18n="cooldown_hint">
+              بین درخواست‌های API مکث می‌گذارد تا خطا کمتر شود.
+            </small>
+          </label>
           <div class="row">
             <div id="modelStatus" class="status"></div>
           </div>

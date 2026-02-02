@@ -6,6 +6,7 @@ const defaultState = {
     apiKey: "",
     model: "gemini-flash-latest",
     syncBatchSize: 20,
+    cooldownSeconds: 2,
     driveClientId: "",
     driveFileName: "lingopop-cards.json",
     driveFileId: "",
@@ -143,6 +144,10 @@ const I18N = {
     sync_batch_placeholder: "20",
     sync_batch_hint:
       "برای جلوگیری از خطای API مقدار کمتر انتخاب کنید (مثلا ۱۵ تا ۲۵).",
+    cooldown_label: "زمان کول‌دان (ثانیه)",
+    cooldown_placeholder: "2",
+    cooldown_hint: "بین درخواست‌های API مکث می‌گذارد تا خطا کمتر شود.",
+    cooldown_prefix: "کول‌دان",
     api_test_ok: "اتصال به API موفق بود.",
     api_test_fail: "اتصال به API ناموفق بود.",
     api_test_word_ok: "تست لغت موفق: {word}",
@@ -279,6 +284,10 @@ const I18N = {
     sync_batch_placeholder: "20",
     sync_batch_hint:
       "Use a smaller batch size to avoid API limits (e.g. 15 to 25).",
+    cooldown_label: "Cooldown seconds",
+    cooldown_placeholder: "2",
+    cooldown_hint: "Pause between API requests to reduce errors.",
+    cooldown_prefix: "Cooldown",
     api_test_ok: "API connection successful.",
     api_test_fail: "API connection failed.",
     api_test_word_ok: "Word test ok: {word}",
@@ -415,6 +424,10 @@ const I18N = {
     sync_batch_placeholder: "20",
     sync_batch_hint:
       "Kies een kleinere batch om API-limieten te vermijden (bijv. 15-25).",
+    cooldown_label: "Cooldown seconden",
+    cooldown_placeholder: "2",
+    cooldown_hint: "Pauze tussen API-verzoeken om fouten te beperken.",
+    cooldown_prefix: "Cooldown",
     api_test_ok: "API-verbinding geslaagd.",
     api_test_fail: "API-verbinding mislukt.",
     api_test_word_ok: "Woordtest ok: {word}",
@@ -497,6 +510,7 @@ const elements = {
   apiKey: document.getElementById("apiKey"),
   modelName: document.getElementById("modelName"),
   syncBatchSize: document.getElementById("syncBatchSize"),
+  cooldownSeconds: document.getElementById("cooldownSeconds"),
   modelStatus: document.getElementById("modelStatus"),
   apiTest: document.getElementById("apiTest"),
   apiTestStatus: document.getElementById("apiTestStatus"),
@@ -557,6 +571,9 @@ function init() {
   elements.modelName.value = state.settings.model;
   if (elements.syncBatchSize) {
     elements.syncBatchSize.value = String(state.settings.syncBatchSize || 20);
+  }
+  if (elements.cooldownSeconds) {
+    elements.cooldownSeconds.value = String(state.settings.cooldownSeconds ?? 2);
   }
   if (elements.languageSelect) {
     elements.languageSelect.value = state.settings.language || "fa";
@@ -762,6 +779,12 @@ function wireEvents() {
       state.settings.syncBatchSize = clampNumber(normalized, 5, 50);
       elements.syncBatchSize.value = String(state.settings.syncBatchSize);
     }
+    if (elements.cooldownSeconds) {
+      const raw = parseInt(elements.cooldownSeconds.value, 10);
+      const normalized = Number.isFinite(raw) ? raw : 2;
+      state.settings.cooldownSeconds = clampNumber(normalized, 0, 30);
+      elements.cooldownSeconds.value = String(state.settings.cooldownSeconds);
+    }
     state.settings.driveClientId = elements.driveClientId.value.trim();
     state.settings.driveFileName =
       elements.driveFileName.value.trim() || "lingopop-cards.json";
@@ -778,12 +801,14 @@ function wireEvents() {
   if (elements.apiTest) {
     elements.apiTest.addEventListener("click", async () => {
       await testApiConnection();
+      await runCooldown(elements.apiTest, getCooldownSeconds());
     });
   }
 
   if (elements.apiTestAll) {
     elements.apiTestAll.addEventListener("click", async () => {
       await testAllModels();
+      await runCooldown(elements.apiTestAll, getCooldownSeconds());
     });
   }
 
@@ -923,6 +948,7 @@ function wireEvents() {
         return;
       }
       addedCount = await addWordsWithCorrection(words, shelf.id);
+      await runCooldown(elements.createCustomShelf, getCooldownSeconds());
       setStatus(t("words_added", { count: addedCount }));
       setCustomShelfStatus(
         addedCount > 0
@@ -1311,6 +1337,48 @@ function downloadFile(content, filename, type) {
 
 function clampNumber(value, min, max) {
   return Math.min(Math.max(value, min), max);
+}
+
+function getCooldownSeconds() {
+  return clampNumber(state.settings.cooldownSeconds ?? 2, 0, 30);
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function runCooldown(button, seconds, options = {}) {
+  if (!button || !Number.isFinite(seconds) || seconds <= 0) return;
+  const {
+    prefix = t("cooldown_prefix"),
+    keepDisabled = false,
+    preserveText = false,
+    keepClass = false,
+  } = options;
+  if (button.dataset.cooldownActive === "true") return;
+  button.dataset.cooldownActive = "true";
+  const originalHtml = button.innerHTML;
+  const originalDisabled = button.disabled;
+  button.classList.add("cooldown");
+  button.disabled = true;
+  let remaining = seconds;
+  while (remaining > 0) {
+    if (!preserveText) {
+      button.textContent = `${prefix} ${remaining}s`;
+    }
+    await sleep(1000);
+    remaining -= 1;
+  }
+  if (!preserveText) {
+    button.innerHTML = originalHtml;
+  }
+  if (!keepClass) {
+    button.classList.remove("cooldown");
+  }
+  button.dataset.cooldownActive = "false";
+  if (!keepDisabled) {
+    button.disabled = originalDisabled;
+  }
 }
 
 function getIoMode() {
@@ -1948,6 +2016,7 @@ function renderWords() {
     syncButton.innerHTML = "<i class='fa-solid fa-rotate'></i>";
     syncButton.addEventListener("click", async () => {
       await syncSingleCard(item);
+      await runCooldown(syncButton, getCooldownSeconds(), { preserveText: true });
     });
 
     const shelfButton = document.createElement("button");
@@ -2031,11 +2100,13 @@ async function syncAllWords() {
   }
 
   elements.syncWords.disabled = true;
+  elements.syncWords.classList.add("cooldown");
   showToast(t("sync_progress", { done: 0, total: pending.length }));
   setStatus(t("sync_progress", { done: 0, total: pending.length }));
   let syncOk = true;
   try {
     const batchSize = clampNumber(state.settings.syncBatchSize || 20, 5, 50);
+    const cooldownSeconds = getCooldownSeconds();
     let correctionMap = new Map();
     try {
       const correctionBatchSize = clampNumber(batchSize * 2, 10, 60);
@@ -2096,6 +2167,13 @@ async function syncAllWords() {
         setStatus(
           t("sync_progress", { done: processedCount, total: pending.length })
         );
+        if (cooldownSeconds > 0 && i + batchSize < pending.length) {
+          await runCooldown(elements.syncWords, cooldownSeconds, {
+            keepDisabled: true,
+            preserveText: true,
+            keepClass: true,
+          });
+        }
       } catch (error) {
         console.error(error);
         syncOk = false;
@@ -2127,6 +2205,7 @@ async function syncAllWords() {
     }
   }
   elements.syncWords.disabled = false;
+  elements.syncWords.classList.remove("cooldown");
   refreshPracticeDeck();
   renderPractice();
 }
