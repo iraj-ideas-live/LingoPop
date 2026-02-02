@@ -228,15 +228,45 @@ body {
   background-attachment: fixed;
 }
 
+
 .app-header {
-  padding: 24px 16px 8px;
+  padding: 16px;
   text-align: center;
 }
 
 .app-header h1 {
-  margin: 0 0 8px;
-  font-size: 22px;
+  margin: 0;
+  font-size: 20px;
   font-weight: 700;
+}
+
+.app-header.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.app-logo-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.app-logo-button img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
 }
 
 .app-header p {
@@ -253,6 +283,12 @@ body {
   flex-wrap: wrap;
 }
 
+.top-bar .tabs {
+  padding: 0;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+}
+
 .tab-button {
   border: none;
   padding: 10px 16px;
@@ -264,9 +300,22 @@ body {
   color: var(--text-main);
 }
 
+.tab-button.icon-only {
+  padding: 10px;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .tab-button.active {
   background: var(--primary-color);
   color: var(--primary-contrast);
+}
+
+.tab-button.icon-only i {
+  font-size: 16px;
 }
 
 main {
@@ -372,6 +421,14 @@ main {
   justify-content: center;
 }
 
+#openPracticeSettings {
+  padding: 4px 8px;
+  height: 28px;
+  min-width: 0;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
 .icon-button i {
   font-size: 16px;
 }
@@ -426,6 +483,7 @@ input[type="text"],
 input[type="password"],
 select {
   flex: 1;
+  width: 100%;
   padding: 10px 12px;
   border-radius: calc(var(--border-radius) - 2px);
   border: var(--border-width) solid var(--border-color);
@@ -539,6 +597,17 @@ button.primary {
   flex-wrap: wrap;
 }
 
+.small-icon {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 8px;
+}
+
+.small-icon i {
+  font-size: 12px;
+}
+
 .word-suggestion {
   display: flex;
   gap: 8px;
@@ -581,10 +650,63 @@ button.primary {
   padding: 24px 16px;
 }
 
+.toast {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: var(--border-width) solid var(--border-color);
+  box-shadow: var(--shadow);
+  padding: 10px 16px;
+  border-radius: 999px;
+  z-index: 50;
+}
+
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.sheet-panel {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  background: var(--bg-card);
+  border-radius: 20px 20px 0 0;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.sheet-handle {
+  width: 44px;
+  height: 4px;
+  background: var(--border-color);
+  border-radius: 999px;
+  margin: 0 auto 12px;
+}
+.practice-selector {
+  display: grid;
+  gap: 12px;
+}
+
+
 .practice-flip {
   perspective: 1200px;
-  margin-bottom: 16px;
-  min-height: 220px;
+  min-height: 140px;
+  position: relative;
+  touch-action: pan-x;
 }
 
 .practice-flip-inner {
@@ -617,6 +739,7 @@ button.primary {
 
 .practice-front .practice-word-card {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
@@ -626,6 +749,13 @@ button.primary {
 .practice-front .word-header {
   width: 100%;
   justify-content: center;
+}
+
+.practice-pronunciation {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--text-soft);
+  text-align: center;
 }
 
 .practice-box-list {
@@ -751,6 +881,45 @@ button.primary {
   justify-content: flex-end;
 }
 
+.shelf-cards {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.shelf-card {
+  border: var(--border-width) solid var(--border-color);
+  background: var(--bg-card);
+  border-radius: var(--border-radius);
+  padding: 10px 12px;
+  text-align: start;
+  cursor: pointer;
+  display: grid;
+  gap: 6px;
+  transition: 0.2s ease;
+  color: var(--text-main);
+}
+
+.shelf-card.active {
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow);
+}
+
+.shelf-card-title {
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.shelf-card-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.shelf-card-desc {
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
 .theme-chips {
   display: flex;
   flex-wrap: wrap;
@@ -795,8 +964,19 @@ button.primary {
 .practice-actions {
   display: flex;
   gap: 12px;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: center;
   flex-wrap: wrap;
+}
+
+.practice-action-group {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.practice-options {
+  white-space: nowrap;
 }
 
 .practice-actions.sticky {
@@ -810,8 +990,12 @@ button.primary {
   box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.08);
 }
 
+.sheet-boxes {
+  margin-top: 8px;
+}
+
 .practice-card.sticky-actions {
-  padding-bottom: 120px;
+  padding-bottom: 72px;
 }
 
 .switch-field {
