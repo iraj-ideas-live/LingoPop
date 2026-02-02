@@ -332,45 +332,49 @@
 
         <div class="card settings-page" data-settings-page="json">
           <h2 data-i18n="json_section">ورود و خروجی JSON</h2>
+          <label class="field">
+            <span data-i18n="io_mode_label">نوع فایل</span>
+            <select id="ioMode">
+              <option value="words_only" data-i18n="io_words_only">
+                فقط لغت‌ها
+              </option>
+              <option value="words_meanings" data-i18n="io_words_meanings">
+                لغت‌ها با معنی
+              </option>
+              <option value="cards_no_shelf" data-i18n="io_cards_no_shelf">
+                همه کارت‌ها بدون شلف
+              </option>
+              <option
+                value="cards_with_shelf"
+                data-i18n="io_cards_with_shelf"
+                selected
+              >
+                همه کارت‌ها با شلف
+              </option>
+            </select>
+          </label>
           <div class="row">
-            <input type="file" id="jsonFile" accept="application/json" />
-            <button id="importJson" data-i18n="json_import">ورود فایل</button>
-            <select id="importShelfSelectWords"></select>
+            <input type="file" id="ioFile" accept="application/json" />
+            <button id="ioImport" data-i18n="io_import_btn">ورود فایل</button>
+            <button id="ioExport" data-i18n="io_export_btn">خروجی فایل</button>
           </div>
-          <p class="hint" data-i18n="json_import_hint">
-            فرمت ورود: آرایه‌ای از رشته‌ها یا اشیاء با کلید word
+          <p class="hint" data-i18n="io_mode_hint">
+            پیش‌فرض: لغت‌ها با ترجمه و در شلف خودش
           </p>
+
           <div class="row">
-            <button id="exportJson" data-i18n="json_export">خروجی کامل کارت‌ها</button>
-            <button id="exportWords" class="icon-button">خروجی لغت‌ها</button>
-            <select id="exportShelfSelect"></select>
-          </div>
-          <div class="row">
-            <button id="exportWordsShelves" class="icon-button" data-i18n="words_shelf_export">
-              خروجی لغت‌ها با شلف
-            </button>
-          </div>
-          <div class="row">
-            <input type="file" id="cardsJsonFile" accept="application/json" />
-            <button id="importCards" data-i18n="cards_import">ورود کارت‌های کامل</button>
-            <select id="importShelfSelectCards"></select>
-          </div>
-          <p class="hint" data-i18n="cards_import_hint">
-            فرمت: آرایه‌ای از کارت‌ها با فیلد word. کارت‌های تکراری اضافه نمی‌شوند.
-          </p>
-          <div class="row">
-            <input type="file" id="wordsShelvesFile" accept="application/json" />
-            <button id="importWordsShelves" data-i18n="words_shelf_import">
-              ورود لغت‌ها با شلف
-            </button>
-          </div>
-          <p class="hint" data-i18n="words_shelf_import_hint">
-            فرمت: { shelves: [{ name, description, words: [] }] } یا آرایه‌ای از
-            { word, shelf }.
-          </p>
-          <div class="row">
+            <select id="copyMode">
+              <option value="all" data-i18n="copy_all_words">
+                کپی همه لغت‌ها
+              </option>
+              <option value="shelf" data-i18n="copy_shelf_words">
+                کپی لغت‌های یک شلف
+              </option>
+            </select>
             <select id="copyShelfSelect"></select>
-            <button id="copyShelfWords" class="icon-button">کپی لغت‌های شلف</button>
+            <button id="copyShelfWords" class="icon-button" data-i18n="copy_btn">
+              کپی
+            </button>
           </div>
         </div>
 

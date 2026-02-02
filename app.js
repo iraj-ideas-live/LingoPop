@@ -84,6 +84,17 @@ const I18N = {
     json_import: "ورود فایل",
     json_import_hint: "فرمت ورود: آرایه‌ای از رشته‌ها یا اشیاء با کلید word",
     json_export: "خروجی کامل کارت‌ها",
+    io_mode_label: "نوع فایل",
+    io_words_only: "فقط لغت‌ها",
+    io_words_meanings: "لغت‌ها با معنی",
+    io_cards_no_shelf: "همه کارت‌ها بدون شلف",
+    io_cards_with_shelf: "همه کارت‌ها با شلف",
+    io_import_btn: "ورود فایل",
+    io_export_btn: "خروجی فایل",
+    io_mode_hint: "پیش‌فرض: لغت‌ها با ترجمه و در شلف خودش",
+    copy_all_words: "کپی همه لغت‌ها",
+    copy_shelf_words: "کپی لغت‌های یک شلف",
+    copy_btn: "کپی",
     words_shelf_export: "خروجی لغت‌ها با شلف",
     words_shelf_import: "ورود لغت‌ها با شلف",
     words_shelf_import_hint:
@@ -210,6 +221,17 @@ const I18N = {
     json_import: "Import file",
     json_import_hint: "Format: array of strings or objects with word key",
     json_export: "Export all cards",
+    io_mode_label: "File type",
+    io_words_only: "Words only",
+    io_words_meanings: "Words with meanings",
+    io_cards_no_shelf: "All cards without shelf",
+    io_cards_with_shelf: "All cards with shelf",
+    io_import_btn: "Import file",
+    io_export_btn: "Export file",
+    io_mode_hint: "Default: words with meanings in their shelf",
+    copy_all_words: "Copy all words",
+    copy_shelf_words: "Copy shelf words",
+    copy_btn: "Copy",
     words_shelf_export: "Export words with shelves",
     words_shelf_import: "Import words with shelves",
     words_shelf_import_hint:
@@ -335,6 +357,17 @@ const I18N = {
     json_import: "Bestand importeren",
     json_import_hint: "Formaat: array van strings of objecten met word key",
     json_export: "Alle kaarten exporteren",
+    io_mode_label: "Bestandstype",
+    io_words_only: "Alleen woorden",
+    io_words_meanings: "Woorden met betekenissen",
+    io_cards_no_shelf: "Alle kaarten zonder shelf",
+    io_cards_with_shelf: "Alle kaarten met shelf",
+    io_import_btn: "Bestand importeren",
+    io_export_btn: "Bestand exporteren",
+    io_mode_hint: "Standaard: woorden met betekenis in hun shelf",
+    copy_all_words: "Kopieer alle woorden",
+    copy_shelf_words: "Kopieer woorden uit shelf",
+    copy_btn: "Kopiëren",
     words_shelf_export: "Woorden met shelves exporteren",
     words_shelf_import: "Woorden met shelves importeren",
     words_shelf_import_hint:
@@ -429,23 +462,16 @@ const elements = {
   panels: document.querySelectorAll(".tab-panel"),
   wordInput: document.getElementById("wordInput"),
   addWords: document.getElementById("addWords"),
-  jsonFile: document.getElementById("jsonFile"),
-  importJson: document.getElementById("importJson"),
-  exportJson: document.getElementById("exportJson"),
-  exportWords: document.getElementById("exportWords"),
-  exportWordsShelves: document.getElementById("exportWordsShelves"),
+  ioFile: document.getElementById("ioFile"),
+  ioMode: document.getElementById("ioMode"),
+  ioImport: document.getElementById("ioImport"),
+  ioExport: document.getElementById("ioExport"),
   syncWords: document.getElementById("syncWords"),
   syncStatus: document.getElementById("syncStatus"),
   wordList: document.getElementById("wordList"),
-  cardsJsonFile: document.getElementById("cardsJsonFile"),
-  importCards: document.getElementById("importCards"),
-  wordsShelvesFile: document.getElementById("wordsShelvesFile"),
-  importWordsShelves: document.getElementById("importWordsShelves"),
   copyShelfWords: document.getElementById("copyShelfWords"),
   copyShelfSelect: document.getElementById("copyShelfSelect"),
-  importShelfSelectWords: document.getElementById("importShelfSelectWords"),
-  importShelfSelectCards: document.getElementById("importShelfSelectCards"),
-  exportShelfSelect: document.getElementById("exportShelfSelect"),
+  copyMode: document.getElementById("copyMode"),
   practiceEmpty: document.getElementById("practiceEmpty"),
   practiceSelector: document.getElementById("practiceSelector"),
   practiceCard: document.getElementById("practiceCard"),
@@ -552,8 +578,8 @@ function init() {
   applyStickyPracticeButtons();
   renderShelfSelect();
   renderShelfList();
-  renderImportExportShelfOptions();
   renderShelfCards();
+  updateCopyModeUi();
   wireEvents();
   renderWords();
   refreshPracticeDeck();
@@ -587,60 +613,19 @@ function wireEvents() {
     setStatus(t("words_added", { count: added }));
   });
 
-  elements.importJson.addEventListener("click", () => {
-    if (!elements.jsonFile.files?.length) {
-      setStatus(t("json_select_file"));
-      return;
-    }
-    const file = elements.jsonFile.files[0];
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const data = JSON.parse(reader.result);
-        const words = extractWordsFromJson(data);
-        const shelfId = getShelfSelection(elements.importShelfSelectWords?.value);
-        const added = await addWordsWithCorrection(words, shelfId);
-        setStatus(t("json_imported", { count: added }));
-      } catch (error) {
-        setStatus(t("json_invalid"));
-      }
-    };
-    reader.readAsText(file);
-  });
-
-  elements.importCards.addEventListener("click", () => {
-    if (!elements.cardsJsonFile.files?.length) {
-      setStatus(t("cards_select_file"));
-      return;
-    }
-    const file = elements.cardsJsonFile.files[0];
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const data = JSON.parse(reader.result);
-        const shelfId = getShelfSelection(elements.importShelfSelectCards?.value);
-        const { added, skipped } = addCardsFromJson(data, shelfId);
-        setStatus(t("cards_imported", { added, skipped }));
-      } catch (error) {
-        setStatus(t("cards_invalid"));
-      }
-    };
-    reader.readAsText(file);
-  });
-
-  if (elements.importWordsShelves) {
-    elements.importWordsShelves.addEventListener("click", () => {
-      if (!elements.wordsShelvesFile.files?.length) {
+  if (elements.ioImport) {
+    elements.ioImport.addEventListener("click", () => {
+      if (!elements.ioFile.files?.length) {
         setStatus(t("json_select_file"));
         return;
       }
-      const file = elements.wordsShelvesFile.files[0];
+      const file = elements.ioFile.files[0];
       const reader = new FileReader();
       reader.onload = async () => {
         try {
           const data = JSON.parse(reader.result);
-          const importedCount = await importWordsWithShelves(data);
-          setStatus(t("words_shelf_imported", { count: importedCount }));
+          const mode = getIoMode();
+          await handleImportByMode(mode, data);
         } catch (error) {
           setStatus(t("json_invalid"));
         }
@@ -649,50 +634,45 @@ function wireEvents() {
     });
   }
 
-  if (elements.exportJson) {
-    elements.exportJson.addEventListener("click", () => {
-      const shelfId = getShelfSelection(elements.exportShelfSelect?.value, true);
-      const cards = filterWordsByShelf(shelfId);
-      const payload = JSON.stringify(cards, null, 2);
-      downloadFile(payload, "lingopop-cards.json", "application/json");
+  if (elements.ioExport) {
+    elements.ioExport.addEventListener("click", () => {
+      const mode = getIoMode();
+      handleExportByMode(mode);
     });
   }
 
-  if (elements.exportWords) {
-    elements.exportWords.addEventListener("click", () => {
-      const shelfId = getShelfSelection(elements.exportShelfSelect?.value, true);
-      const words = filterWordsByShelf(shelfId).map((word) => word.word);
-      downloadFile(words.join("\n"), "lingopop-words.txt", "text/plain");
-    });
-  }
-
-  if (elements.exportWordsShelves) {
-    elements.exportWordsShelves.addEventListener("click", () => {
-      const payload = buildWordsWithShelvesExport();
-      downloadFile(payload, "lingopop-words-shelves.json", "application/json");
+  if (elements.copyMode) {
+    elements.copyMode.addEventListener("change", () => {
+      updateCopyModeUi();
     });
   }
 
   if (elements.copyShelfWords) {
     elements.copyShelfWords.addEventListener("click", () => {
-      const shelfId = elements.copyShelfSelect?.value;
-      const shelf = state.settings.shelves.find((item) => item.id === shelfId);
-      if (!shelf) {
-        setStatus("شلف پیدا نشد.");
-        return;
+      const mode = elements.copyMode?.value || "all";
+      let words = [];
+      if (mode === "shelf") {
+        const shelfId = elements.copyShelfSelect?.value;
+        const shelf = state.settings.shelves.find((item) => item.id === shelfId);
+        if (!shelf) {
+          setStatus("شلف پیدا نشد.");
+          return;
+        }
+        words = state.words
+          .filter((word) => word.shelfId === shelf.id)
+          .map((word) => word.word);
+      } else {
+        words = state.words.map((word) => word.word);
       }
-      const words = state.words
-        .filter((word) => word.shelfId === shelf.id)
-        .map((word) => word.word);
       if (!words.length) {
-        setStatus("لغتی برای کپی در این شلف وجود ندارد.");
+        setStatus("لغتی برای کپی وجود ندارد.");
         return;
       }
       const payload = words.join("\n");
       navigator.clipboard
         .writeText(payload)
         .then(() => {
-          setStatus("لغات شلف کپی شد.");
+          setStatus("لغات کپی شد.");
         })
         .catch(() => {
           setStatus("کپی انجام نشد.");
@@ -1218,7 +1198,6 @@ function renderShelfSelect() {
   });
   elements.shelfSelect.value = getActiveShelfId();
   renderCopyShelfOptions();
-  renderImportExportShelfOptions();
 }
 
 function renderShelfCards() {
@@ -1294,16 +1273,11 @@ function renderShelfList() {
     elements.shelfList.appendChild(row);
   });
   renderCopyShelfOptions();
-  renderImportExportShelfOptions();
 }
 
 function renderCopyShelfOptions() {
   if (!elements.copyShelfSelect) return;
   elements.copyShelfSelect.innerHTML = "";
-  const allOption = document.createElement("option");
-  allOption.value = "all";
-  allOption.textContent = "همه شلف‌ها";
-  elements.copyShelfSelect.appendChild(allOption);
   state.settings.shelves.forEach((shelf) => {
     const option = document.createElement("option");
     option.value = shelf.id;
@@ -1311,30 +1285,6 @@ function renderCopyShelfOptions() {
     elements.copyShelfSelect.appendChild(option);
   });
   elements.copyShelfSelect.value = getActiveShelfId();
-}
-
-function renderImportExportShelfOptions() {
-  const fillSelect = (select, includeAll = false) => {
-    if (!select) return;
-    select.innerHTML = "";
-    if (includeAll) {
-      const allOption = document.createElement("option");
-      allOption.value = "all";
-      allOption.textContent = "همه شلف‌ها";
-      select.appendChild(allOption);
-    }
-    state.settings.shelves.forEach((shelf) => {
-      const option = document.createElement("option");
-      option.value = shelf.id;
-      option.textContent = shelf.name;
-      select.appendChild(option);
-    });
-    select.value = getActiveShelfId();
-  };
-
-  fillSelect(elements.exportShelfSelect, true);
-  fillSelect(elements.importShelfSelectWords, false);
-  fillSelect(elements.importShelfSelectCards, false);
 }
 
 function getShelfSelection(value, allowAll = false) {
@@ -1361,6 +1311,94 @@ function downloadFile(content, filename, type) {
 
 function clampNumber(value, min, max) {
   return Math.min(Math.max(value, min), max);
+}
+
+function getIoMode() {
+  return elements.ioMode?.value || "cards_with_shelf";
+}
+
+function updateCopyModeUi() {
+  if (!elements.copyShelfSelect || !elements.copyMode) return;
+  const mode = elements.copyMode.value || "all";
+  elements.copyShelfSelect.classList.toggle("hidden", mode !== "shelf");
+}
+
+function buildWordsWithMeaningsExport() {
+  const payload = state.words.map((word) => ({
+    word: word.word,
+    meaningsByLang: word.meaningsByLang || {},
+    meaningFa: word.meaningFa || "",
+    meaningEn: word.meaningEn || "",
+    pronunciation: word.pronunciation || "",
+    example: word.example || "",
+    synonyms: word.synonyms || [],
+  }));
+  return JSON.stringify(payload, null, 2);
+}
+
+function buildCardsWithoutShelfExport() {
+  const payload = state.words.map((word) => {
+    const copy = { ...word };
+    delete copy.shelfId;
+    delete copy.shelfName;
+    return copy;
+  });
+  return JSON.stringify(payload, null, 2);
+}
+
+function buildCardsWithShelvesExport() {
+  const shelves = state.settings.shelves.map((shelf) => ({
+    name: shelf.name,
+    description: shelf.description || "",
+  }));
+  const cards = state.words.map((word) => {
+    const shelf =
+      state.settings.shelves.find((s) => s.id === (word.shelfId || "default")) ||
+      state.settings.shelves[0];
+    return {
+      ...word,
+      shelfName: shelf?.name || getDefaultShelfName(),
+    };
+  });
+  return JSON.stringify({ shelves, cards }, null, 2);
+}
+
+async function handleExportByMode(mode) {
+  if (mode === "words_only") {
+    const words = state.words.map((word) => word.word);
+    downloadFile(JSON.stringify(words, null, 2), "lingopop-words.json", "application/json");
+    return;
+  }
+  if (mode === "words_meanings") {
+    downloadFile(buildWordsWithMeaningsExport(), "lingopop-words-meanings.json", "application/json");
+    return;
+  }
+  if (mode === "cards_no_shelf") {
+    downloadFile(buildCardsWithoutShelfExport(), "lingopop-cards.json", "application/json");
+    return;
+  }
+  downloadFile(buildCardsWithShelvesExport(), "lingopop-cards-shelves.json", "application/json");
+}
+
+async function handleImportByMode(mode, data) {
+  if (mode === "words_only") {
+    const words = extractWordsFromJson(data);
+    const added = await addWordsWithCorrection(words, getActiveShelfId());
+    setStatus(t("json_imported", { count: added }));
+    return;
+  }
+  if (mode === "words_meanings") {
+    const { added, skipped } = addCardsFromJson(data, getActiveShelfId());
+    setStatus(t("cards_imported", { added, skipped }));
+    return;
+  }
+  if (mode === "cards_no_shelf") {
+    const { added, skipped } = addCardsFromJson(data, getActiveShelfId());
+    setStatus(t("cards_imported", { added, skipped }));
+    return;
+  }
+  const { added, skipped } = await importCardsWithShelves(data);
+  setStatus(t("cards_imported", { added, skipped }));
 }
 
 function normalizeShelfName(name) {
@@ -1466,6 +1504,51 @@ async function importWordsWithShelves(data) {
   renderShelfCards();
   renderWords();
   return totalAdded;
+}
+
+async function importCardsWithShelves(data) {
+  let cards = [];
+  const shelfMap = new Map();
+
+  if (data && Array.isArray(data.shelves)) {
+    data.shelves.forEach((shelf) => {
+      const name = typeof shelf?.name === "string" ? shelf.name.trim() : "";
+      const description =
+        typeof shelf?.description === "string" ? shelf.description.trim() : "";
+      const created = getOrCreateShelfByName(name, description);
+      shelfMap.set(shelf.id || name, created.id);
+      shelfMap.set(name, created.id);
+    });
+  }
+
+  if (data && Array.isArray(data.cards)) {
+    cards = data.cards;
+  } else if (Array.isArray(data)) {
+    cards = data;
+  } else {
+    throw new Error("Invalid format");
+  }
+
+  const normalizedCards = cards.map((card) => {
+    const shelfKey =
+      card?.shelfId ||
+      card?.shelfName ||
+      card?.shelf ||
+      card?.shelf_name ||
+      card?.shelfId;
+    const shelfId =
+      shelfMap.get(shelfKey) ||
+      getOrCreateShelfByName(typeof shelfKey === "string" ? shelfKey : "").id;
+    return { ...card, shelfId };
+  });
+
+  const result = addCardsFromJson(normalizedCards);
+  saveState();
+  renderShelfSelect();
+  renderShelfList();
+  renderShelfCards();
+  renderWords();
+  return result;
 }
 
 async function generateShelfWords(topic, level, count, language) {
