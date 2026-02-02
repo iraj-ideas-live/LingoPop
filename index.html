@@ -346,12 +346,27 @@
             <select id="exportShelfSelect"></select>
           </div>
           <div class="row">
+            <button id="exportWordsShelves" class="icon-button" data-i18n="words_shelf_export">
+              خروجی لغت‌ها با شلف
+            </button>
+          </div>
+          <div class="row">
             <input type="file" id="cardsJsonFile" accept="application/json" />
             <button id="importCards" data-i18n="cards_import">ورود کارت‌های کامل</button>
             <select id="importShelfSelectCards"></select>
           </div>
           <p class="hint" data-i18n="cards_import_hint">
             فرمت: آرایه‌ای از کارت‌ها با فیلد word. کارت‌های تکراری اضافه نمی‌شوند.
+          </p>
+          <div class="row">
+            <input type="file" id="wordsShelvesFile" accept="application/json" />
+            <button id="importWordsShelves" data-i18n="words_shelf_import">
+              ورود لغت‌ها با شلف
+            </button>
+          </div>
+          <p class="hint" data-i18n="words_shelf_import_hint">
+            فرمت: { shelves: [{ name, description, words: [] }] } یا آرایه‌ای از
+            { word, shelf }.
           </p>
           <div class="row">
             <select id="copyShelfSelect"></select>

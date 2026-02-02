@@ -5,6 +5,7 @@ const defaultState = {
   settings: {
     apiKey: "",
     model: "gemini-flash-latest",
+    syncBatchSize: 20,
     driveClientId: "",
     driveFileName: "lingopop-cards.json",
     driveFileId: "",
@@ -18,9 +19,12 @@ const defaultState = {
     stickyPracticeButtons: true,
     language: "fa",
     shelves: [
-      { id: "default", name: "Default", description: "", isDefault: true },
+      { id: "default", name: "تمامی لغات", description: "", isDefault: true },
     ],
     activeShelfId: "default",
+    practiceLanguage: "fa",
+    practiceShelfId: "default",
+    practiceStarted: false,
   },
 };
 
@@ -32,6 +36,8 @@ let practiceState = {
   activeBox: null,
   currentBoxIndex: 0,
 };
+
+let shelfSheetTargetId = null;
 
 const I18N = {
   fa: {
@@ -51,6 +57,7 @@ const I18N = {
     practice_known: "بلدم",
     practice_unknown: "نمی‌دونم",
     practice_done: "تمرین این باکس تمام شد.",
+    practice_section: "بخش تمرین",
     correction_title: "املای درست:",
     correction_action: "جایگزین کن",
     correction_copy: "کپی",
@@ -77,6 +84,14 @@ const I18N = {
     json_import: "ورود فایل",
     json_import_hint: "فرمت ورود: آرایه‌ای از رشته‌ها یا اشیاء با کلید word",
     json_export: "خروجی کامل کارت‌ها",
+    words_shelf_export: "خروجی لغت‌ها با شلف",
+    words_shelf_import: "ورود لغت‌ها با شلف",
+    words_shelf_import_hint:
+      "فرمت: { shelves: [{ name, description, words: [] }] } یا آرایه‌ای از { word, shelf }.",
+    words_shelf_imported: "{count} لغت وارد شد.",
+    shelf_list_title: "شلف‌ها",
+    shelf_word_count: "تعداد لغت‌ها: {count}",
+    shelf_default_name: "تمامی لغات",
     cards_import: "ورود کارت‌های کامل",
     cards_import_hint:
       "فرمت: آرایه‌ای از کارت‌ها با فیلد word. کارت‌های تکراری اضافه نمی‌شوند.",
@@ -87,7 +102,7 @@ const I18N = {
     sticky_buttons_label: "چسباندن دکمه‌های تمرین در پایین صفحه",
     about_title: "درباره نرم‌افزار",
     about_text:
-      "LingoPop یک برنامه ساده و سبک برای مدیریت لغت، ساخت کارت‌های آموزشی و تمرین با جعبه‌های G5 است. شما می‌توانید لغت‌ها را دستی یا از طریق فایل JSON وارد کنید، با Google API برای هر لغت معنی فارسی، معنی انگلیسی، تلفظ، جمله نمونه و هم‌معنی‌ها تولید کنید و سپس در تب تمرین آن‌ها را مرور کنید. همه داده‌ها به‌صورت محلی ذخیره می‌شوند و در صورت نیاز می‌توانید کارت‌ها را با فایل موجود در Google Drive نیز سینک کنید.",
+      "LingoPop یک برنامه سبک برای مدیریت لغت و کارت‌های آموزشی است. لغت‌ها را دستی یا با فایل JSON وارد کنید، با Google API معنی، تلفظ، مثال و هم‌معنی‌ها را بسازید و با جعبه‌های G5 تمرین کنید. می‌توانید شلف‌ها بسازید، بین شلف‌ها جابه‌جا کنید، خروجی بگیرید و با Google Drive سینک کنید. همه داده‌ها به‌صورت محلی ذخیره می‌شوند.",
     meaning_target: "معنی:",
     meaning_english: "معنی انگلیسی:",
     pronunciation: "تلفظ:",
@@ -113,15 +128,23 @@ const I18N = {
     cards_invalid: "فرمت فایل کارت‌ها معتبر نیست.",
     settings_saved: "تنظیمات ذخیره شد.",
     api_key_required: "لطفا کلید API را در تنظیمات وارد کنید.",
+    sync_batch_label: "اندازه بچ سینک",
+    sync_batch_placeholder: "20",
+    sync_batch_hint:
+      "برای جلوگیری از خطای API مقدار کمتر انتخاب کنید (مثلا ۱۵ تا ۲۵).",
     api_test_ok: "اتصال به API موفق بود.",
     api_test_fail: "اتصال به API ناموفق بود.",
     api_test_word_ok: "تست لغت موفق: {word}",
     api_test_word_fail: "تست لغت ناموفق بود.",
+    api_test_start: "در حال تست اتصال...",
+    custom_shelf_start: "در حال ساخت شلف اختصاصی...",
     api_test_all_start: "در حال تست همه مدل‌ها...",
     api_test_all_done: "مدل‌های پیشنهادی: {models}",
     api_test_all_none: "هیچ مدل موفقی یافت نشد.",
     sync_all_none: "همه لغت‌ها کامل هستند.",
     sync_in_progress: "در حال سینک {count} لغت در یک درخواست...",
+    sync_progress: "در حال سینک {done} از {total} لغت...",
+    sync_partial_done: "سینک تا اینجا انجام شد: {done} از {total} لغت.",
     sync_done: "سینک تمام شد.",
     sync_partial: "سینک انجام شد. {missing} لغت بدون پاسخ ماند.",
     sync_error: "خطا در سینک با Google API",
@@ -160,6 +183,7 @@ const I18N = {
     practice_known: "Know it",
     practice_unknown: "Don't know",
     practice_done: "Practice in this box is complete.",
+    practice_section: "Practice section",
     correction_title: "Did you mean:",
     correction_action: "Replace",
     correction_copy: "Copy",
@@ -186,6 +210,14 @@ const I18N = {
     json_import: "Import file",
     json_import_hint: "Format: array of strings or objects with word key",
     json_export: "Export all cards",
+    words_shelf_export: "Export words with shelves",
+    words_shelf_import: "Import words with shelves",
+    words_shelf_import_hint:
+      "Format: { shelves: [{ name, description, words: [] }] } or array of { word, shelf }.",
+    words_shelf_imported: "{count} words imported.",
+    shelf_list_title: "Shelves",
+    shelf_word_count: "Words: {count}",
+    shelf_default_name: "All words",
     cards_import: "Import full cards",
     cards_import_hint: "Format: array of cards with word field. Duplicates are skipped.",
     theme_title: "Appearance",
@@ -195,7 +227,7 @@ const I18N = {
     sticky_buttons_label: "Stick practice buttons to bottom",
     about_title: "About",
     about_text:
-      "LingoPop is a lightweight app for vocabulary cards and G5 practice. Add words manually or via JSON, generate meanings, pronunciation, example sentences, and synonyms via Google API, then practice in the Practice tab. Data is stored locally and can sync with Google Drive.",
+      "LingoPop is a lightweight app for vocabulary cards and G5 practice. Add words manually or via JSON, generate meanings, pronunciation, examples, and synonyms with Google API, practice with G5 boxes, organize shelves, export/import, and sync with Google Drive. All data is stored locally.",
     meaning_target: "Meaning:",
     meaning_english: "English meaning:",
     pronunciation: "Pronunciation:",
@@ -221,15 +253,23 @@ const I18N = {
     cards_invalid: "Invalid cards JSON format.",
     settings_saved: "Settings saved.",
     api_key_required: "Please enter API key in settings.",
+    sync_batch_label: "Sync batch size",
+    sync_batch_placeholder: "20",
+    sync_batch_hint:
+      "Use a smaller batch size to avoid API limits (e.g. 15 to 25).",
     api_test_ok: "API connection successful.",
     api_test_fail: "API connection failed.",
     api_test_word_ok: "Word test ok: {word}",
     api_test_word_fail: "Word test failed.",
+    api_test_start: "Testing API connection...",
+    custom_shelf_start: "Creating custom shelf...",
     api_test_all_start: "Testing all models...",
     api_test_all_done: "Recommended models: {models}",
     api_test_all_none: "No model passed the tests.",
     sync_all_none: "All words are complete.",
     sync_in_progress: "Syncing {count} words in one request...",
+    sync_progress: "Syncing {done} of {total} words...",
+    sync_partial_done: "Sync completed so far: {done} of {total} words.",
     sync_done: "Sync complete.",
     sync_partial: "Sync done. {missing} words missing.",
     sync_error: "Google API sync failed.",
@@ -268,6 +308,7 @@ const I18N = {
     practice_known: "Ken ik",
     practice_unknown: "Weet ik niet",
     practice_done: "Oefenen in deze box is klaar.",
+    practice_section: "Oefensectie",
     correction_title: "Bedoelde je:",
     correction_action: "Vervangen",
     correction_copy: "Kopiëren",
@@ -294,6 +335,14 @@ const I18N = {
     json_import: "Bestand importeren",
     json_import_hint: "Formaat: array van strings of objecten met word key",
     json_export: "Alle kaarten exporteren",
+    words_shelf_export: "Woorden met shelves exporteren",
+    words_shelf_import: "Woorden met shelves importeren",
+    words_shelf_import_hint:
+      "Formaat: { shelves: [{ name, description, words: [] }] } of array { word, shelf }.",
+    words_shelf_imported: "{count} woorden geïmporteerd.",
+    shelf_list_title: "Shelves",
+    shelf_word_count: "Woorden: {count}",
+    shelf_default_name: "Alle woorden",
     cards_import: "Volledige kaarten importeren",
     cards_import_hint: "Formaat: array kaarten met word veld. Dubbelen worden overgeslagen.",
     theme_title: "Uiterlijk",
@@ -303,7 +352,7 @@ const I18N = {
     sticky_buttons_label: "Oefenknoppen onderaan vastzetten",
     about_title: "Over",
     about_text:
-      "LingoPop is een lichte app voor woordkaarten en G5-oefenen. Voeg woorden handmatig of via JSON toe, genereer betekenissen, uitspraak, voorbeeldzinnen en synoniemen via Google API, en oefen in het Oefenen-tabblad. Gegevens worden lokaal opgeslagen en kunnen met Google Drive worden gesynchroniseerd.",
+      "LingoPop is een lichte app voor woordkaarten en G5-oefenen. Voeg woorden handmatig of via JSON toe, maak betekenissen, uitspraak, voorbeelden en synoniemen met Google API, oefen met G5-boxen, beheer shelves, exporteer/importeer en synchroniseer met Google Drive. Alle data wordt lokaal opgeslagen.",
     meaning_target: "Betekenis:",
     meaning_english: "Engelse betekenis:",
     pronunciation: "Uitspraak:",
@@ -329,15 +378,23 @@ const I18N = {
     cards_invalid: "Ongeldig kaarten-JSON formaat.",
     settings_saved: "Instellingen opgeslagen.",
     api_key_required: "Vul de API-sleutel in bij instellingen.",
+    sync_batch_label: "Sync batch grootte",
+    sync_batch_placeholder: "20",
+    sync_batch_hint:
+      "Kies een kleinere batch om API-limieten te vermijden (bijv. 15-25).",
     api_test_ok: "API-verbinding geslaagd.",
     api_test_fail: "API-verbinding mislukt.",
     api_test_word_ok: "Woordtest ok: {word}",
     api_test_word_fail: "Woordtest mislukt.",
+    api_test_start: "API-verbinding testen...",
+    custom_shelf_start: "Custom shelf maken...",
     api_test_all_start: "Bezig met alle modellen testen...",
     api_test_all_done: "Aanbevolen modellen: {models}",
     api_test_all_none: "Geen model geslaagd.",
     sync_all_none: "Alle woorden zijn compleet.",
     sync_in_progress: "Bezig met {count} woorden in één verzoek...",
+    sync_progress: "Bezig met {done} van {total} woorden...",
+    sync_partial_done: "Sync tot nu toe: {done} van {total} woorden.",
     sync_done: "Synchronisatie voltooid.",
     sync_partial: "Sync klaar. {missing} woorden ontbreken.",
     sync_error: "Google API synchronisatie mislukt.",
@@ -375,18 +432,29 @@ const elements = {
   jsonFile: document.getElementById("jsonFile"),
   importJson: document.getElementById("importJson"),
   exportJson: document.getElementById("exportJson"),
+  exportWords: document.getElementById("exportWords"),
+  exportWordsShelves: document.getElementById("exportWordsShelves"),
   syncWords: document.getElementById("syncWords"),
   syncStatus: document.getElementById("syncStatus"),
   wordList: document.getElementById("wordList"),
   cardsJsonFile: document.getElementById("cardsJsonFile"),
   importCards: document.getElementById("importCards"),
+  wordsShelvesFile: document.getElementById("wordsShelvesFile"),
+  importWordsShelves: document.getElementById("importWordsShelves"),
+  copyShelfWords: document.getElementById("copyShelfWords"),
+  copyShelfSelect: document.getElementById("copyShelfSelect"),
+  importShelfSelectWords: document.getElementById("importShelfSelectWords"),
+  importShelfSelectCards: document.getElementById("importShelfSelectCards"),
+  exportShelfSelect: document.getElementById("exportShelfSelect"),
   practiceEmpty: document.getElementById("practiceEmpty"),
+  practiceSelector: document.getElementById("practiceSelector"),
   practiceCard: document.getElementById("practiceCard"),
   g5Boxes: document.getElementById("g5Boxes"),
   g5BoxesReset: document.querySelector(".g5-box.reset"),
   g5Counts: document.getElementById("g5Counts"),
   practiceFlip: document.getElementById("practiceFlip"),
   practiceFrontCard: document.getElementById("practiceFrontCard"),
+  practicePronunciation: document.getElementById("practicePronunciation"),
   practiceWord: document.getElementById("practiceWord"),
   practiceDetails: document.getElementById("practiceDetails"),
   practiceProgressFill: document.getElementById("practiceProgressFill"),
@@ -394,8 +462,15 @@ const elements = {
   markUnknown: document.getElementById("markUnknown"),
   practiceActions: document.querySelector("#practiceCard .practice-actions"),
   practiceProgress: document.getElementById("practiceProgress"),
+  practiceLanguage: document.getElementById("practiceLanguage"),
+  practiceShelf: document.getElementById("practiceShelf"),
+  startPractice: document.getElementById("startPractice"),
+  openPracticeSettings: document.getElementById("openPracticeSettings"),
+  practiceSheet: document.getElementById("practiceSheet"),
+  toast: document.getElementById("toast"),
   apiKey: document.getElementById("apiKey"),
   modelName: document.getElementById("modelName"),
+  syncBatchSize: document.getElementById("syncBatchSize"),
   modelStatus: document.getElementById("modelStatus"),
   apiTest: document.getElementById("apiTest"),
   apiTestStatus: document.getElementById("apiTestStatus"),
@@ -404,6 +479,13 @@ const elements = {
   apiTestAllStatus: document.getElementById("apiTestAllStatus"),
   languageSelect: document.getElementById("languageSelect"),
   saveSettings: document.getElementById("saveSettings"),
+  forceUpdate: document.getElementById("forceUpdate"),
+  updateStatus: document.getElementById("updateStatus"),
+  shelfSheet: document.getElementById("shelfSheet"),
+  shelfSheetSelect: document.getElementById("shelfSheetSelect"),
+  shelfSheetApply: document.getElementById("shelfSheetApply"),
+  aboutTrigger: document.getElementById("aboutTrigger"),
+  aboutSheet: document.getElementById("aboutSheet"),
   driveClientId: document.getElementById("driveClientId"),
   driveFileName: document.getElementById("driveFileName"),
   driveFileId: document.getElementById("driveFileId"),
@@ -423,6 +505,7 @@ const elements = {
   settingsPages: document.querySelectorAll(".settings-page"),
   settingsItems: document.querySelectorAll(".settings-item"),
   shelfSelect: document.getElementById("shelfSelect"),
+  shelfCards: document.getElementById("shelfCards"),
   shelfName: document.getElementById("shelfName"),
   addShelf: document.getElementById("addShelf"),
   shelfList: document.getElementById("shelfList"),
@@ -446,6 +529,9 @@ init();
 function init() {
   elements.apiKey.value = state.settings.apiKey;
   elements.modelName.value = state.settings.model;
+  if (elements.syncBatchSize) {
+    elements.syncBatchSize.value = String(state.settings.syncBatchSize || 20);
+  }
   if (elements.languageSelect) {
     elements.languageSelect.value = state.settings.language || "fa";
   }
@@ -466,6 +552,8 @@ function init() {
   applyStickyPracticeButtons();
   renderShelfSelect();
   renderShelfList();
+  renderImportExportShelfOptions();
+  renderShelfCards();
   wireEvents();
   renderWords();
   refreshPracticeDeck();
@@ -510,7 +598,8 @@ function wireEvents() {
       try {
         const data = JSON.parse(reader.result);
         const words = extractWordsFromJson(data);
-        const added = await addWordsWithCorrection(words);
+        const shelfId = getShelfSelection(elements.importShelfSelectWords?.value);
+        const added = await addWordsWithCorrection(words, shelfId);
         setStatus(t("json_imported", { count: added }));
       } catch (error) {
         setStatus(t("json_invalid"));
@@ -529,7 +618,8 @@ function wireEvents() {
     reader.onload = () => {
       try {
         const data = JSON.parse(reader.result);
-        const { added, skipped } = addCardsFromJson(data);
+        const shelfId = getShelfSelection(elements.importShelfSelectCards?.value);
+        const { added, skipped } = addCardsFromJson(data, shelfId);
         setStatus(t("cards_imported", { added, skipped }));
       } catch (error) {
         setStatus(t("cards_invalid"));
@@ -538,16 +628,79 @@ function wireEvents() {
     reader.readAsText(file);
   });
 
-  elements.exportJson.addEventListener("click", () => {
-    const payload = JSON.stringify(state.words, null, 2);
-    const blob = new Blob([payload], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = "lingopop-words.json";
-    anchor.click();
-    URL.revokeObjectURL(url);
-  });
+  if (elements.importWordsShelves) {
+    elements.importWordsShelves.addEventListener("click", () => {
+      if (!elements.wordsShelvesFile.files?.length) {
+        setStatus(t("json_select_file"));
+        return;
+      }
+      const file = elements.wordsShelvesFile.files[0];
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const data = JSON.parse(reader.result);
+          const importedCount = await importWordsWithShelves(data);
+          setStatus(t("words_shelf_imported", { count: importedCount }));
+        } catch (error) {
+          setStatus(t("json_invalid"));
+        }
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  if (elements.exportJson) {
+    elements.exportJson.addEventListener("click", () => {
+      const shelfId = getShelfSelection(elements.exportShelfSelect?.value, true);
+      const cards = filterWordsByShelf(shelfId);
+      const payload = JSON.stringify(cards, null, 2);
+      downloadFile(payload, "lingopop-cards.json", "application/json");
+    });
+  }
+
+  if (elements.exportWords) {
+    elements.exportWords.addEventListener("click", () => {
+      const shelfId = getShelfSelection(elements.exportShelfSelect?.value, true);
+      const words = filterWordsByShelf(shelfId).map((word) => word.word);
+      downloadFile(words.join("\n"), "lingopop-words.txt", "text/plain");
+    });
+  }
+
+  if (elements.exportWordsShelves) {
+    elements.exportWordsShelves.addEventListener("click", () => {
+      const payload = buildWordsWithShelvesExport();
+      downloadFile(payload, "lingopop-words-shelves.json", "application/json");
+    });
+  }
+
+  if (elements.copyShelfWords) {
+    elements.copyShelfWords.addEventListener("click", () => {
+      const shelfId = elements.copyShelfSelect?.value;
+      const shelf = state.settings.shelves.find((item) => item.id === shelfId);
+      if (!shelf) {
+        setStatus("شلف پیدا نشد.");
+        return;
+      }
+      const words = state.words
+        .filter((word) => word.shelfId === shelf.id)
+        .map((word) => word.word);
+      if (!words.length) {
+        setStatus("لغتی برای کپی در این شلف وجود ندارد.");
+        return;
+      }
+      const payload = words.join("\n");
+      navigator.clipboard
+        .writeText(payload)
+        .then(() => {
+          setStatus("لغات شلف کپی شد.");
+        })
+        .catch(() => {
+          setStatus("کپی انجام نشد.");
+        });
+    });
+  }
+
+  // export handled in new handler with shelf filter
 
   elements.syncWords.addEventListener("click", async () => {
     await syncAllWords();
@@ -559,13 +712,33 @@ function wireEvents() {
   });
 
   let swipeStart = null;
-  elements.practiceFlip.addEventListener("pointerdown", (event) => {
-    swipeStart = { x: event.clientX, y: event.clientY };
+  let swipeLocked = false;
+  elements.practiceFlip.addEventListener("touchstart", (event) => {
+    const touch = event.touches[0];
+    swipeStart = { x: touch.clientX, y: touch.clientY };
+    swipeLocked = false;
   });
-  elements.practiceFlip.addEventListener("pointerup", (event) => {
+  elements.practiceFlip.addEventListener(
+    "touchmove",
+    (event) => {
+      if (!swipeStart) return;
+      const touch = event.touches[0];
+      const dx = touch.clientX - swipeStart.x;
+      const dy = touch.clientY - swipeStart.y;
+      if (!swipeLocked && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+        swipeLocked = true;
+      }
+      if (swipeLocked) {
+        event.preventDefault();
+      }
+    },
+    { passive: false }
+  );
+  elements.practiceFlip.addEventListener("touchend", (event) => {
     if (!swipeStart) return;
-    const dx = event.clientX - swipeStart.x;
-    const dy = event.clientY - swipeStart.y;
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - swipeStart.x;
+    const dy = touch.clientY - swipeStart.y;
     swipeStart = null;
     if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
     if (dx < 0) {
@@ -603,6 +776,12 @@ function wireEvents() {
   elements.saveSettings.addEventListener("click", () => {
     state.settings.apiKey = elements.apiKey.value.trim();
     state.settings.model = elements.modelName.value.trim() || "gemini-flash-latest";
+    if (elements.syncBatchSize) {
+      const raw = parseInt(elements.syncBatchSize.value, 10);
+      const normalized = Number.isFinite(raw) ? raw : 20;
+      state.settings.syncBatchSize = clampNumber(normalized, 5, 50);
+      elements.syncBatchSize.value = String(state.settings.syncBatchSize);
+    }
     state.settings.driveClientId = elements.driveClientId.value.trim();
     state.settings.driveFileName =
       elements.driveFileName.value.trim() || "lingopop-cards.json";
@@ -625,6 +804,89 @@ function wireEvents() {
   if (elements.apiTestAll) {
     elements.apiTestAll.addEventListener("click", async () => {
       await testAllModels();
+    });
+  }
+
+  if (elements.forceUpdate) {
+    elements.forceUpdate.addEventListener("click", async () => {
+      await forceAppUpdate();
+    });
+  }
+
+  if (elements.practiceLanguage) {
+    elements.practiceLanguage.addEventListener("change", (event) => {
+      state.settings.practiceLanguage = event.target.value;
+      saveState();
+      renderPractice();
+    });
+  }
+
+  if (elements.practiceShelf) {
+    elements.practiceShelf.addEventListener("change", (event) => {
+      state.settings.practiceShelfId = event.target.value;
+      saveState();
+      if (state.settings.practiceStarted) {
+        refreshPracticeDeck();
+        renderPractice();
+      }
+    });
+  }
+
+  if (elements.startPractice) {
+    elements.startPractice.addEventListener("click", () => {
+      state.settings.practiceStarted = true;
+      saveState();
+      refreshPracticeDeck();
+      renderPractice();
+      togglePracticeSheet(false);
+    });
+  }
+
+  if (elements.openPracticeSettings) {
+    elements.openPracticeSettings.addEventListener("click", () => {
+      togglePracticeSheet(true);
+    });
+  }
+
+  if (elements.practiceSheet) {
+    const backdrop = elements.practiceSheet.querySelector(".sheet-backdrop");
+    backdrop?.addEventListener("click", () => {
+      togglePracticeSheet(false);
+    });
+  }
+
+  if (elements.shelfSheet) {
+    const backdrop = elements.shelfSheet.querySelector(".sheet-backdrop");
+    backdrop?.addEventListener("click", () => {
+      elements.shelfSheet.classList.add("hidden");
+    });
+  }
+
+  if (elements.aboutSheet) {
+    const backdrop = elements.aboutSheet.querySelector(".sheet-backdrop");
+    backdrop?.addEventListener("click", () => {
+      elements.aboutSheet.classList.add("hidden");
+    });
+  }
+
+  if (elements.aboutTrigger) {
+    elements.aboutTrigger.addEventListener("click", () => {
+      if (!elements.aboutSheet) return;
+      elements.aboutSheet.classList.remove("hidden");
+    });
+  }
+
+  if (elements.shelfSheetApply) {
+    elements.shelfSheetApply.addEventListener("click", () => {
+      if (!shelfSheetTargetId) return;
+      const word = state.words.find((item) => item.id === shelfSheetTargetId);
+      if (!word) return;
+      word.shelfId = elements.shelfSheetSelect.value;
+      word.updatedAt = new Date().toISOString();
+      saveState();
+      renderWords();
+      elements.shelfSheet.classList.add("hidden");
+      shelfSheetTargetId = null;
     });
   }
 
@@ -671,23 +933,34 @@ function wireEvents() {
       return;
     }
     const shelf = createShelf({ name, description });
+    let customOk = true;
+    let addedCount = 0;
     try {
+      showToast(t("custom_shelf_start"));
       const words = await generateShelfWords(description, level, count, language);
       if (!words.length) {
         setCustomShelfStatus(t("custom_shelf_empty"));
         return;
       }
-      const added = await addWordsWithCorrection(words, shelf.id);
-      setStatus(t("words_added", { count: added }));
+      addedCount = await addWordsWithCorrection(words, shelf.id);
+      setStatus(t("words_added", { count: addedCount }));
       setCustomShelfStatus(
-        added > 0 ? t("custom_shelf_done", { count: added }) : t("custom_shelf_no_new")
+        addedCount > 0
+          ? t("custom_shelf_done", { count: addedCount })
+          : t("custom_shelf_no_new")
       );
       renderShelfSelect();
       renderShelfList();
       renderWords();
     } catch (error) {
+      customOk = false;
       console.error(error);
       setCustomShelfStatus(error.message || t("sync_error"));
+      showToast(error.message || t("sync_error"));
+    } finally {
+      if (customOk && addedCount > 0) {
+        showToast(t("custom_shelf_done", { count: addedCount }));
+      }
     }
   });
 
@@ -751,6 +1024,10 @@ function normalizeTheme(theme) {
   return theme || "clean";
 }
 
+function getDefaultShelfName() {
+  return t("shelf_default_name");
+}
+
 function applyLanguage() {
   const lang = state.settings.language || "fa";
   const dir = lang === "fa" ? "rtl" : "ltr";
@@ -771,6 +1048,7 @@ function applyLanguage() {
   document.querySelectorAll("[data-show-english]").forEach((element) => {
     element.classList.toggle("hidden", lang === "en");
   });
+  updateDefaultShelfName();
 }
 
 function getLanguageName(lang) {
@@ -799,23 +1077,63 @@ function shouldShowEnglishMeaning() {
   return (state.settings.language || "fa") !== "en";
 }
 
+function getPracticeDirClass() {
+  const lang = state.settings.practiceLanguage || state.settings.language || "fa";
+  return lang === "fa" ? "dir-rtl" : "dir-ltr";
+}
+
+function getPracticeMeaning(item) {
+  const lang = state.settings.practiceLanguage || state.settings.language || "fa";
+  if (lang === "en") {
+    return item.meaningsByLang?.en || item.meaningEn || "";
+  }
+  if (lang === "nl") {
+    return item.meaningsByLang?.nl || "";
+  }
+  return item.meaningsByLang?.fa || item.meaningFa || "";
+}
+
+function syncPracticeSelectors() {
+  if (elements.practiceLanguage) {
+    elements.practiceLanguage.value = state.settings.practiceLanguage || "fa";
+  }
+  if (elements.practiceShelf) {
+    elements.practiceShelf.innerHTML = "";
+    state.settings.shelves.forEach((shelf) => {
+      const option = document.createElement("option");
+      option.value = shelf.id;
+      option.textContent = shelf.name;
+      elements.practiceShelf.appendChild(option);
+    });
+    elements.practiceShelf.value = state.settings.practiceShelfId || "default";
+  }
+}
+
 function ensureShelves() {
   const raw = state.settings.shelves;
   let shelves = Array.isArray(raw) ? raw.filter(Boolean) : [];
+  const defaultName = getDefaultShelfName();
   if (!shelves.length) {
-    shelves = [{ id: "default", name: "Default", description: "", isDefault: true }];
+    shelves = [
+      { id: "default", name: defaultName, description: "", isDefault: true },
+    ];
   }
   if (!shelves.some((shelf) => shelf.id === "default")) {
     shelves.unshift({
       id: "default",
-      name: "Default",
+      name: defaultName,
       description: "",
       isDefault: true,
     });
   }
   state.settings.shelves = shelves.map((shelf) => ({
     id: shelf.id,
-    name: shelf.name || "Default",
+    name:
+      shelf.id === "default"
+        ? shelf.name && shelf.name !== "Default"
+          ? shelf.name
+          : defaultName
+        : shelf.name || defaultName,
     description: shelf.description || "",
     isDefault: shelf.id === "default" || shelf.isDefault,
   }));
@@ -829,6 +1147,18 @@ function ensureShelves() {
     if (!word.shelfId) word.shelfId = "default";
   });
   saveState();
+}
+
+function updateDefaultShelfName() {
+  const defaultName = getDefaultShelfName();
+  const shelf = state.settings.shelves.find((item) => item.id === "default");
+  if (shelf && shelf.name !== defaultName) {
+    shelf.name = defaultName;
+    saveState();
+    renderShelfSelect();
+    renderShelfList();
+    renderShelfCards();
+  }
 }
 
 function getActiveShelfId() {
@@ -849,15 +1179,16 @@ function createShelf({ name, description = "" }) {
 function removeShelf(shelfId) {
   if (shelfId === "default") return;
   state.settings.shelves = state.settings.shelves.filter((s) => s.id !== shelfId);
+  const defaultName = getDefaultShelfName();
   if (!state.settings.shelves.length) {
     state.settings.shelves = [
-      { id: "default", name: "Default", description: "", isDefault: true },
+      { id: "default", name: defaultName, description: "", isDefault: true },
     ];
   }
   if (!state.settings.shelves.some((s) => s.id === "default")) {
     state.settings.shelves.unshift({
       id: "default",
-      name: "Default",
+      name: defaultName,
       description: "",
       isDefault: true,
     });
@@ -886,6 +1217,46 @@ function renderShelfSelect() {
     elements.shelfSelect.appendChild(option);
   });
   elements.shelfSelect.value = getActiveShelfId();
+  renderCopyShelfOptions();
+  renderImportExportShelfOptions();
+}
+
+function renderShelfCards() {
+  if (!elements.shelfCards) return;
+  elements.shelfCards.innerHTML = "";
+  const activeShelfId = getActiveShelfId();
+  state.settings.shelves.forEach((shelf) => {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "shelf-card";
+    if (shelf.id === activeShelfId) {
+      card.classList.add("active");
+    }
+    const title = document.createElement("div");
+    title.className = "shelf-card-title";
+    title.textContent = shelf.name;
+    const count = state.words.filter(
+      (word) => (word.shelfId || "default") === shelf.id
+    ).length;
+    const meta = document.createElement("div");
+    meta.className = "shelf-card-meta";
+    meta.textContent = t("shelf_word_count", { count });
+    const desc = document.createElement("div");
+    desc.className = "shelf-card-desc";
+    desc.textContent = shelf.description || "";
+    card.appendChild(title);
+    card.appendChild(meta);
+    if (shelf.description) {
+      card.appendChild(desc);
+    }
+    card.addEventListener("click", () => {
+      state.settings.activeShelfId = shelf.id;
+      saveState();
+      renderWords();
+      renderShelfCards();
+    });
+    elements.shelfCards.appendChild(card);
+  });
 }
 
 function renderShelfList() {
@@ -922,6 +1293,179 @@ function renderShelfList() {
     row.appendChild(actions);
     elements.shelfList.appendChild(row);
   });
+  renderCopyShelfOptions();
+  renderImportExportShelfOptions();
+}
+
+function renderCopyShelfOptions() {
+  if (!elements.copyShelfSelect) return;
+  elements.copyShelfSelect.innerHTML = "";
+  const allOption = document.createElement("option");
+  allOption.value = "all";
+  allOption.textContent = "همه شلف‌ها";
+  elements.copyShelfSelect.appendChild(allOption);
+  state.settings.shelves.forEach((shelf) => {
+    const option = document.createElement("option");
+    option.value = shelf.id;
+    option.textContent = shelf.name;
+    elements.copyShelfSelect.appendChild(option);
+  });
+  elements.copyShelfSelect.value = getActiveShelfId();
+}
+
+function renderImportExportShelfOptions() {
+  const fillSelect = (select, includeAll = false) => {
+    if (!select) return;
+    select.innerHTML = "";
+    if (includeAll) {
+      const allOption = document.createElement("option");
+      allOption.value = "all";
+      allOption.textContent = "همه شلف‌ها";
+      select.appendChild(allOption);
+    }
+    state.settings.shelves.forEach((shelf) => {
+      const option = document.createElement("option");
+      option.value = shelf.id;
+      option.textContent = shelf.name;
+      select.appendChild(option);
+    });
+    select.value = getActiveShelfId();
+  };
+
+  fillSelect(elements.exportShelfSelect, true);
+  fillSelect(elements.importShelfSelectWords, false);
+  fillSelect(elements.importShelfSelectCards, false);
+}
+
+function getShelfSelection(value, allowAll = false) {
+  if (allowAll && value === "all") return "all";
+  return value || getActiveShelfId();
+}
+
+function filterWordsByShelf(shelfId) {
+  if (shelfId === "all") return state.words;
+  return state.words.filter(
+    (word) => (word.shelfId || "default") === shelfId
+  );
+}
+
+function downloadFile(content, filename, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function clampNumber(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function normalizeShelfName(name) {
+  return (name || "").trim().toLowerCase();
+}
+
+function findShelfByName(name) {
+  const target = normalizeShelfName(name);
+  if (!target) {
+    return state.settings.shelves.find((shelf) => shelf.id === "default");
+  }
+  return (
+    state.settings.shelves.find(
+      (shelf) => normalizeShelfName(shelf.name) === target
+    ) || null
+  );
+}
+
+function createShelfSilent({ name, description = "" }) {
+  const id = `shelf-${Date.now().toString(36)}-${Math.random()
+    .toString(16)
+    .slice(2, 6)}`;
+  const shelf = { id, name, description, isDefault: false };
+  state.settings.shelves.push(shelf);
+  return shelf;
+}
+
+function getOrCreateShelfByName(name, description = "") {
+  const existing = findShelfByName(name);
+  if (existing) {
+    if (!existing.description && description) {
+      existing.description = description;
+    }
+    return existing;
+  }
+  if (!name || normalizeShelfName(name) === normalizeShelfName(getDefaultShelfName())) {
+    return state.settings.shelves.find((shelf) => shelf.id === "default");
+  }
+  return createShelfSilent({ name, description });
+}
+
+function buildWordsWithShelvesExport() {
+  const shelves = state.settings.shelves.map((shelf) => {
+    const words = state.words
+      .filter((word) => (word.shelfId || "default") === shelf.id)
+      .map((word) => word.word);
+    return {
+      name: shelf.name,
+      description: shelf.description || "",
+      words,
+    };
+  });
+  return JSON.stringify({ shelves }, null, 2);
+}
+
+async function importWordsWithShelves(data) {
+  let totalAdded = 0;
+
+  if (data && Array.isArray(data.shelves)) {
+    for (const shelf of data.shelves) {
+      const name = typeof shelf?.name === "string" ? shelf.name.trim() : "";
+      const description =
+        typeof shelf?.description === "string" ? shelf.description.trim() : "";
+      const words = Array.isArray(shelf?.words) ? shelf.words : [];
+      const targetShelf = getOrCreateShelfByName(name, description);
+      const added = await addWordsWithCorrection(words, targetShelf.id);
+      totalAdded += added;
+    }
+  } else if (Array.isArray(data)) {
+    const grouped = new Map();
+    data.forEach((entry) => {
+      if (!entry) return;
+      let word = "";
+      let shelfName = "";
+      if (typeof entry === "string") {
+        word = entry;
+      } else if (typeof entry.word === "string") {
+        word = entry.word;
+        shelfName =
+          entry.shelfName || entry.shelf || entry.shelf_name || entry.shelfId;
+      }
+      if (!word) return;
+      const shelf = getOrCreateShelfByName(
+        typeof shelfName === "string" ? shelfName.trim() : ""
+      );
+      if (!grouped.has(shelf.id)) {
+        grouped.set(shelf.id, []);
+      }
+      grouped.get(shelf.id).push(word);
+    });
+
+    for (const [shelfId, words] of grouped.entries()) {
+      const added = await addWordsWithCorrection(words, shelfId);
+      totalAdded += added;
+    }
+  } else {
+    throw new Error("Invalid format");
+  }
+
+  saveState();
+  renderShelfSelect();
+  renderShelfList();
+  renderShelfCards();
+  renderWords();
+  return totalAdded;
 }
 
 async function generateShelfWords(topic, level, count, language) {
@@ -959,6 +1503,7 @@ async function generateShelfWords(topic, level, count, language) {
     result.candidates?.[0]?.content?.parts?.map((part) => part.text).join("") ||
     "";
   let jsonText;
+  let syncOk = true;
   try {
     jsonText = extractJsonFromText(text);
   } catch (error) {
@@ -1091,8 +1636,13 @@ function setActiveTab(tabId) {
     panel.classList.toggle("active", panel.id === tabId);
   });
   if (tabId === "practice") {
-    refreshPracticeDeck();
-    renderPractice();
+    if (state.settings.practiceStarted && practiceState.deck.length) {
+      renderPractice();
+    } else {
+      refreshPracticeDeck();
+      renderPractice();
+    }
+    syncPracticeSelectors();
   }
   if (tabId === "settings") {
     showSettingsPage(null);
@@ -1141,7 +1691,7 @@ function extractWordsFromJson(data) {
   return [];
 }
 
-function addCardsFromJson(data) {
+function addCardsFromJson(data, shelfId = getActiveShelfId()) {
   const cards = Array.isArray(data)
     ? data
     : data && Array.isArray(data.words)
@@ -1163,7 +1713,7 @@ function addCardsFromJson(data) {
     const normalized = normalizeCard({
       ...card,
       word,
-      shelfId: card.shelfId || getActiveShelfId(),
+      shelfId: card.shelfId || shelfId,
     });
     normalized.id = crypto.randomUUID();
     normalized.createdAt = normalized.createdAt || new Date().toISOString();
@@ -1232,6 +1782,7 @@ async function addWordsWithCorrection(list, shelfId = getActiveShelfId()) {
 }
 
 function renderWords() {
+  renderShelfCards();
   if (!state.words.length) {
     elements.wordList.innerHTML = "<p class='empty-state'>هیچ لغتی وجود ندارد.</p>";
     return;
@@ -1303,9 +1854,24 @@ function renderWords() {
     actions.className = "word-actions";
 
     const pronounceButton = document.createElement("button");
-    pronounceButton.textContent = t("play_pronunciation");
+    pronounceButton.className = "icon-button small-icon";
+    pronounceButton.innerHTML = "<i class='fa-solid fa-volume-low'></i>";
     pronounceButton.addEventListener("click", () => {
       speakWord(item.word);
+    });
+
+    const syncButton = document.createElement("button");
+    syncButton.className = "icon-button small-icon primary";
+    syncButton.innerHTML = "<i class='fa-solid fa-rotate'></i>";
+    syncButton.addEventListener("click", async () => {
+      await syncSingleCard(item);
+    });
+
+    const shelfButton = document.createElement("button");
+    shelfButton.className = "icon-button small-icon";
+    shelfButton.innerHTML = "<i class='fa-solid fa-layer-group'></i>";
+    shelfButton.addEventListener("click", () => {
+      openShelfSheet(item.id, item.shelfId || "default");
     });
 
     if (item.suggestion) {
@@ -1341,22 +1907,6 @@ function renderWords() {
       actions.appendChild(suggestionRow);
     }
 
-    const shelfSelect = document.createElement("select");
-    shelfSelect.className = "shelf-select";
-    state.settings.shelves.forEach((shelf) => {
-      const option = document.createElement("option");
-      option.value = shelf.id;
-      option.textContent = shelf.name;
-      shelfSelect.appendChild(option);
-    });
-    shelfSelect.value = item.shelfId || "default";
-    shelfSelect.addEventListener("change", (event) => {
-      item.shelfId = event.target.value;
-      item.updatedAt = new Date().toISOString();
-      saveState();
-      renderWords();
-    });
-
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
     deleteButton.className = "delete-word";
@@ -1376,7 +1926,8 @@ function renderWords() {
     container.appendChild(header);
     container.appendChild(meta);
     actions.appendChild(pronounceButton);
-    actions.appendChild(shelfSelect);
+    actions.appendChild(syncButton);
+    actions.appendChild(shelfButton);
     container.appendChild(actions);
 
     elements.wordList.appendChild(container);
@@ -1397,61 +1948,100 @@ async function syncAllWords() {
   }
 
   elements.syncWords.disabled = true;
-  setStatus(t("sync_in_progress", { count: pending.length }));
+  showToast(t("sync_progress", { done: 0, total: pending.length }));
+  setStatus(t("sync_progress", { done: 0, total: pending.length }));
+  let syncOk = true;
   try {
+    const batchSize = clampNumber(state.settings.syncBatchSize || 20, 5, 50);
     let correctionMap = new Map();
     try {
-      const corrected = await correctWordsBatch(pending.map((item) => item.word));
-      correctionMap = new Map(
-        pending.map((item, index) => [
-          normalizeWord(item.word),
-          corrected[index]?.trim() || item.word,
-        ])
-      );
+      const correctionBatchSize = clampNumber(batchSize * 2, 10, 60);
+      for (let i = 0; i < pending.length; i += correctionBatchSize) {
+        const chunk = pending.slice(i, i + correctionBatchSize);
+        const corrected = await correctWordsBatch(chunk.map((item) => item.word));
+        corrected.forEach((word, index) => {
+          correctionMap.set(normalizeWord(chunk[index].word), word?.trim());
+        });
+      }
     } catch (error) {
       console.error(error);
     }
 
-    const batchData = await generateCardBatchData(pending.map((item) => item.word));
-    const normalized = new Map(
-      batchData.map((entry) => [normalizeWord(entry.word || ""), entry])
-    );
-
     let updatedCount = 0;
-    pending.forEach((item) => {
-      const data = normalized.get(normalizeWord(item.word));
-      if (!data) return;
-      const meanings = data.meanings || data.meaningsByLang || {};
-      item.meaningFa = meanings.fa || data.meaningFa || item.meaningFa;
-      item.meaningEn = meanings.en || data.meaningEn || item.meaningEn;
-      item.meaningsByLang = {
-        fa: meanings.fa || item.meaningsByLang?.fa || item.meaningFa || "",
-        en: meanings.en || item.meaningsByLang?.en || item.meaningEn || "",
-        nl: meanings.nl || item.meaningsByLang?.nl || "",
-      };
-      item.pronunciation = data.pronunciation || item.pronunciation;
-      item.example = data.example || item.example;
-      item.synonyms = Array.isArray(data.synonyms) ? data.synonyms : item.synonyms;
-      const suggested = correctionMap.get(normalizeWord(item.word));
-      if (suggested && normalizeWord(suggested) !== normalizeWord(item.word)) {
-        item.suggestion = suggested;
-      } else {
-        item.suggestion = "";
+    let processedCount = 0;
+    for (let i = 0; i < pending.length; i += batchSize) {
+      const chunk = pending.slice(i, i + batchSize);
+      try {
+        const batchData = await generateCardBatchData(
+          chunk.map((item) => item.word)
+        );
+        const normalized = new Map(
+          batchData.map((entry) => [normalizeWord(entry.word || ""), entry])
+        );
+        chunk.forEach((item) => {
+          const data = normalized.get(normalizeWord(item.word));
+          if (!data) return;
+          const meanings = data.meanings || data.meaningsByLang || {};
+          item.meaningFa = meanings.fa || data.meaningFa || item.meaningFa;
+          item.meaningEn = meanings.en || data.meaningEn || item.meaningEn;
+          item.meaningsByLang = {
+            fa: meanings.fa || item.meaningsByLang?.fa || item.meaningFa || "",
+            en: meanings.en || item.meaningsByLang?.en || item.meaningEn || "",
+            nl: meanings.nl || item.meaningsByLang?.nl || "",
+          };
+          item.pronunciation = data.pronunciation || item.pronunciation;
+          item.example = data.example || item.example;
+          item.synonyms = Array.isArray(data.synonyms)
+            ? data.synonyms
+            : item.synonyms;
+          const suggested = correctionMap.get(normalizeWord(item.word));
+          if (
+            suggested &&
+            normalizeWord(suggested) !== normalizeWord(item.word)
+          ) {
+            item.suggestion = suggested;
+          } else {
+            item.suggestion = "";
+          }
+          item.synced = isCardComplete(item);
+          item.updatedAt = new Date().toISOString();
+          updatedCount += 1;
+        });
+        processedCount += chunk.length;
+        saveState();
+        renderWords();
+        setStatus(
+          t("sync_progress", { done: processedCount, total: pending.length })
+        );
+      } catch (error) {
+        console.error(error);
+        syncOk = false;
+        setStatus(
+          t("sync_partial_done", {
+            done: processedCount,
+            total: pending.length,
+          })
+        );
+        showToast(error.message || t("sync_error"));
+        break;
       }
-      item.synced = isCardComplete(item);
-      item.updatedAt = new Date().toISOString();
-      updatedCount += 1;
-    });
+    }
 
-    saveState();
-    renderWords();
-    const missing = pending.length - updatedCount;
-    setStatus(
-      missing ? t("sync_partial", { missing }) : t("sync_done")
-    );
+    if (syncOk) {
+      const missing = pending.length - updatedCount;
+      setStatus(
+        missing ? t("sync_partial", { missing }) : t("sync_done")
+      );
+    }
   } catch (error) {
+    syncOk = false;
     console.error(error);
     setStatus(error.message || t("sync_error"));
+    showToast(error.message || t("sync_error"));
+  } finally {
+    if (syncOk) {
+      showToast(t("sync_done"));
+    }
   }
   elements.syncWords.disabled = false;
   refreshPracticeDeck();
@@ -1508,6 +2098,55 @@ async function generateCardBatchData(words) {
     throw new Error(buildApiError("Meaning sync", response.status, jsonText));
   }
   return parsed;
+}
+
+async function syncSingleCard(item) {
+  if (!state.settings.apiKey) {
+    setStatus(t("api_key_required"));
+    return;
+  }
+  try {
+    showToast(t("sync_in_progress", { count: 1 }));
+    const data = await generateCardBatchData([item.word]);
+    const entry = Array.isArray(data) ? data[0] : null;
+    if (entry) {
+      const meanings = entry.meanings || entry.meaningsByLang || {};
+      item.meaningFa = meanings.fa || entry.meaningFa || item.meaningFa;
+      item.meaningEn = meanings.en || entry.meaningEn || item.meaningEn;
+      item.meaningsByLang = {
+        fa: meanings.fa || item.meaningsByLang?.fa || item.meaningFa || "",
+        en: meanings.en || item.meaningsByLang?.en || item.meaningEn || "",
+        nl: meanings.nl || item.meaningsByLang?.nl || "",
+      };
+      item.pronunciation = entry.pronunciation || item.pronunciation;
+      item.example = entry.example || item.example;
+      item.synonyms = Array.isArray(entry.synonyms) ? entry.synonyms : item.synonyms;
+      item.synced = isCardComplete(item);
+      item.updatedAt = new Date().toISOString();
+      saveState();
+      renderWords();
+      refreshPracticeDeck();
+      renderPractice();
+    }
+    showToast(t("sync_done"));
+  } catch (error) {
+    console.error(error);
+    showToast(error.message || t("sync_error"));
+  }
+}
+
+function openShelfSheet(wordId, currentShelfId) {
+  if (!elements.shelfSheet || !elements.shelfSheetSelect) return;
+  shelfSheetTargetId = wordId;
+  elements.shelfSheetSelect.innerHTML = "";
+  state.settings.shelves.forEach((shelf) => {
+    const option = document.createElement("option");
+    option.value = shelf.id;
+    option.textContent = shelf.name;
+    elements.shelfSheetSelect.appendChild(option);
+  });
+  elements.shelfSheetSelect.value = currentShelfId || "default";
+  elements.shelfSheet.classList.remove("hidden");
 }
 
 async function correctWordsBatch(words) {
@@ -1656,6 +2295,7 @@ async function testApiConnection() {
     return;
   }
   try {
+    showToast(t("api_test_start"));
     setApiTestResult("");
     setApiTestAllStatus("");
     const response = await fetch(
@@ -1677,16 +2317,19 @@ async function testApiConnection() {
       const data = await generateCardBatchData([testWord]);
       if (Array.isArray(data) && data.length) {
         setApiTestResult(t("api_test_word_ok", { word: testWord }));
+        showToast(t("api_test_ok"));
       } else {
         setApiTestResult(t("api_test_word_fail"));
       }
     } catch (error) {
       console.error(error);
       setApiTestResult(error.message || t("api_test_word_fail"));
+      showToast(error.message || t("api_test_fail"));
     }
   } catch (error) {
     console.error(error);
     setApiTestStatus(error.message || t("api_test_fail"));
+    showToast(error.message || t("api_test_fail"));
   }
 }
 
@@ -1756,8 +2399,12 @@ function refreshPracticeDeck() {
   }
   const activeBox = practiceState.activeBox || null;
   const allBoxes = [1, 2, 3, 4, 5];
+  const shelfId = state.settings.practiceShelfId || "default";
+  const shelfWords = state.words.filter(
+    (word) => (word.shelfId || "default") === shelfId
+  );
   if (activeBox) {
-    const deck = shuffle(state.words.filter((word) => word.box === activeBox));
+    const deck = shuffle(shelfWords.filter((word) => word.box === activeBox));
     practiceState = {
       deck,
       currentIndex: 0,
@@ -1773,7 +2420,7 @@ function refreshPracticeDeck() {
   for (let i = 0; i < allBoxes.length; i += 1) {
     const index = (startIndex + i) % allBoxes.length;
     const box = allBoxes[index];
-    if (state.words.some((word) => word.box === box)) {
+    if (shelfWords.some((word) => word.box === box)) {
       nextIndex = index;
       break;
     }
@@ -1791,7 +2438,7 @@ function refreshPracticeDeck() {
   }
 
   const selectedBox = allBoxes[nextIndex];
-  const deck = shuffle(state.words.filter((word) => word.box === selectedBox));
+  const deck = shuffle(shelfWords.filter((word) => word.box === selectedBox));
   practiceState = {
     deck,
     currentIndex: 0,
@@ -1802,14 +2449,27 @@ function refreshPracticeDeck() {
 }
 
 function renderPractice() {
+  if (elements.practiceSheet && !state.settings.practiceStarted) {
+    togglePracticeSheet(true);
+  }
+  if (elements.practiceCard) {
+    elements.practiceCard.classList.toggle(
+      "hidden",
+      !state.settings.practiceStarted
+    );
+  }
   if (!practiceState.deck.length) {
     if (!state.words.length) {
       elements.practiceEmpty.classList.remove("hidden");
-      elements.practiceCard.classList.add("hidden");
+      if (elements.practiceCard) {
+        elements.practiceCard.classList.add("hidden");
+      }
       return;
     }
     elements.practiceEmpty.classList.add("hidden");
-    elements.practiceCard.classList.remove("hidden");
+    if (elements.practiceCard) {
+      elements.practiceCard.classList.remove("hidden");
+    }
     renderG5Boxes();
     elements.practiceFlip.classList.remove("flipped");
     elements.practiceDetails.innerHTML = "";
@@ -1827,9 +2487,12 @@ function renderPractice() {
 
   const current = practiceState.deck[practiceState.currentIndex];
   elements.practiceWord.textContent = current.word;
+  if (elements.practicePronunciation) {
+    elements.practicePronunciation.textContent = current.pronunciation || "—";
+  }
   applyPracticeCardTheme();
 
-  const targetMeaning = getTargetMeaning(current) || "—";
+  const targetMeaning = getPracticeMeaning(current) || "—";
   const englishMeaning = current.meaningsByLang?.en || current.meaningEn || "—";
   const details = `
     <header class="word-header">
@@ -1838,7 +2501,7 @@ function renderPractice() {
     <div class="word-meta">
       <div class="word-meta-item">
         <span class="meta-label">${t("meaning_target")}</span>
-        <span class="meta-value ${getTargetDirClass()}">${targetMeaning}</span>
+        <span class="meta-value ${getPracticeDirClass()}">${targetMeaning}</span>
       </div>
       ${
         shouldShowEnglishMeaning()
@@ -1863,9 +2526,16 @@ function renderPractice() {
         }</span>
       </div>
     </div>
+    <div class="word-actions">
+      <button class="practice-pronounce">${t("play_pronunciation")}</button>
+    </div>
   `;
 
   elements.practiceDetails.innerHTML = details;
+  const pronounceButton = elements.practiceDetails.querySelector(".practice-pronounce");
+  pronounceButton?.addEventListener("click", () => {
+    speakWord(current.word);
+  });
   elements.practiceFlip.classList.toggle("flipped", practiceState.showAnswer);
   if (elements.practiceProgressFill) {
     const ratio = (practiceState.currentIndex + 1) / practiceState.deck.length;
@@ -1887,8 +2557,12 @@ function renderG5Boxes() {
       !practiceState.activeBox
     );
   }
+  const shelfId = state.settings.practiceShelfId || "default";
   const counts = [1, 2, 3, 4, 5].map(
-    (box) => state.words.filter((word) => word.box === box).length
+    (box) =>
+      state.words.filter(
+        (word) => (word.shelfId || "default") === shelfId && word.box === box
+      ).length
   );
   elements.g5Boxes.innerHTML = counts
     .map((count, index) => {
@@ -2055,6 +2729,46 @@ function setApiTestAllStatus(message) {
   setApiTestAllStatus.timeoutId = window.setTimeout(() => {
     elements.apiTestAllStatus.textContent = "";
   }, 12000);
+}
+
+function setUpdateStatus(message) {
+  if (!elements.updateStatus) return;
+  elements.updateStatus.textContent = message;
+  window.clearTimeout(setUpdateStatus.timeoutId);
+  setUpdateStatus.timeoutId = window.setTimeout(() => {
+    elements.updateStatus.textContent = "";
+  }, 6000);
+}
+
+function togglePracticeSheet(show) {
+  if (!elements.practiceSheet) return;
+  elements.practiceSheet.classList.toggle("hidden", !show);
+}
+
+function showToast(message) {
+  if (!elements.toast) return;
+  elements.toast.textContent = message;
+  elements.toast.classList.remove("hidden");
+  window.clearTimeout(showToast.timeoutId);
+  showToast.timeoutId = window.setTimeout(() => {
+    elements.toast.classList.add("hidden");
+  }, 3000);
+}
+
+async function forceAppUpdate() {
+  try {
+    setUpdateStatus("در حال بروزرسانی...");
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
+    }
+  } catch (error) {
+    console.error(error);
+  } finally {
+    const url = new URL(window.location.href);
+    url.searchParams.set("update", Date.now().toString());
+    window.location.replace(url.toString());
+  }
 }
 
 function signInWithGoogle() {
