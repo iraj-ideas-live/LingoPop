@@ -614,6 +614,30 @@ button.primary {
   animation: cooldownPulse 1s ease-in-out infinite;
 }
 
+.cooldown::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: 6px;
+  top: 6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: cooldownSpin 0.8s linear infinite;
+}
+
+.cooldown[data-cooldown-left]::before {
+  content: attr(data-cooldown-left) "s";
+  position: absolute;
+  inset-inline-start: 6px;
+  top: 6px;
+  font-size: 11px;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
 @keyframes cooldownPulse {
   0% {
     opacity: 0.6;
@@ -623,6 +647,12 @@ button.primary {
   }
   100% {
     opacity: 0.6;
+  }
+}
+
+@keyframes cooldownSpin {
+  to {
+    transform: rotate(360deg);
   }
 }
 

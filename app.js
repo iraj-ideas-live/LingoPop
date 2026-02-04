@@ -1354,6 +1354,7 @@ async function runCooldown(button, seconds, options = {}) {
     keepDisabled = false,
     preserveText = false,
     keepClass = false,
+    showBadge = true,
   } = options;
   if (button.dataset.cooldownActive === "true") return;
   button.dataset.cooldownActive = "true";
@@ -1363,6 +1364,9 @@ async function runCooldown(button, seconds, options = {}) {
   button.disabled = true;
   let remaining = seconds;
   while (remaining > 0) {
+    if (showBadge) {
+      button.dataset.cooldownLeft = `${remaining}`;
+    }
     if (!preserveText) {
       button.textContent = `${prefix} ${remaining}s`;
     }
@@ -1371,6 +1375,9 @@ async function runCooldown(button, seconds, options = {}) {
   }
   if (!preserveText) {
     button.innerHTML = originalHtml;
+  }
+  if (showBadge) {
+    delete button.dataset.cooldownLeft;
   }
   if (!keepClass) {
     button.classList.remove("cooldown");
