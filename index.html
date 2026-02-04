@@ -78,13 +78,42 @@
           <div class="row space-between words-header">
             <h2 class="section-title" data-i18n="vocabulary_title">Vocabulary</h2>
             <div class="row words-actions">
+              <button id="toggleSearch" class="icon-button" aria-label="Search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </button>
               <button id="syncWords" class="icon-button primary circle-button" aria-label="Sync">
                 <i class="fa-solid fa-rotate"></i>
                 <span class="sync-label" data-i18n="sync_label">دریافت معنی</span>
               </button>
             </div>
           </div>
+          <div id="searchPanel" class="search-panel hidden">
+            <input
+              id="searchInput"
+              type="text"
+              data-i18n-placeholder="search_placeholder"
+              placeholder="جست‌وجو بین همه لغت‌ها..."
+            />
+            <button id="searchClear" class="icon-button" aria-label="Clear">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <div id="searchSuggest" class="search-suggest hidden">
+            <span data-i18n="search_no_result">این لغت پیدا نشد. اضافه کنیم؟</span>
+            <label class="field switch-field search-sync-row">
+              <input id="searchSyncToggle" type="checkbox" />
+              <span class="switch-ui"></span>
+              <span data-i18n="search_sync_toggle">همزمان سینک شود</span>
+            </label>
+            <button id="searchAdd" class="primary" data-i18n="search_add_btn">
+              افزودن
+            </button>
+          </div>
           <div id="syncStatus" class="status"></div>
+          <div id="syncSuggestion" class="sync-suggestion hidden"></div>
+          <div id="syncProgressBar" class="progress-bar small hidden">
+            <div id="syncProgressFill" class="progress-fill"></div>
+          </div>
           <div id="wordList" class="word-list"></div>
         </div>
       </section>
@@ -189,6 +218,10 @@
             <i class="fa-solid fa-palette"></i>
             نمای ظاهری
           </button>
+          <button class="settings-item" data-settings-target="search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            جست‌وجو
+          </button>
           <button class="settings-item" data-settings-target="practice">
             <i class="fa-solid fa-dumbbell"></i>
             تنظیمات تمرین
@@ -200,6 +233,10 @@
           <button class="settings-item" data-settings-target="custom-shelf">
             <i class="fa-solid fa-wand-magic-sparkles"></i>
             شلف اختصاصی
+          </button>
+          <button class="settings-item" data-settings-target="offline-db">
+            <i class="fa-solid fa-database"></i>
+            دیتابیس آفلاین
           </button>
           <button class="settings-item" data-settings-target="card-theme">
             <i class="fa-solid fa-id-card"></i>
@@ -408,6 +445,31 @@
           </div>
         </div>
 
+        <div class="card settings-page" data-settings-page="search">
+          <h2 data-i18n="search_settings_title">تنظیمات جست‌وجو</h2>
+          <label class="field switch-field">
+            <input id="searchSuggestAdd" type="checkbox" checked />
+            <span class="switch-ui"></span>
+            <span data-i18n="search_suggest_label">
+              نمایش پیشنهاد افزودن در جست‌وجو
+            </span>
+          </label>
+          <label class="field switch-field">
+            <input id="searchAllowSync" type="checkbox" checked />
+            <span class="switch-ui"></span>
+            <span data-i18n="search_sync_toggle_label">
+              نمایش سوییچ سینک در جست‌وجو
+            </span>
+          </label>
+          <label class="field switch-field">
+            <input id="searchSyncDefault" type="checkbox" />
+            <span class="switch-ui"></span>
+            <span data-i18n="search_sync_default_label">
+              سینک پیش‌فرض هنگام افزودن
+            </span>
+          </label>
+        </div>
+
         <div class="card settings-page" data-settings-page="practice">
           <h2 data-i18n="practice_settings_title">تنظیمات تمرین</h2>
           <label class="field switch-field">
@@ -465,6 +527,36 @@
           <button id="createCustomShelf" class="primary">ایجاد شلف و افزودن لغت‌ها</button>
           <p class="hint">برای ساخت شلف اختصاصی، کلید API باید تنظیم شده باشد.</p>
           <div id="customShelfStatus" class="status"></div>
+        </div>
+
+        <div class="card settings-page" data-settings-page="offline-db">
+          <h2 data-i18n="offline_title">دیتابیس آفلاین</h2>
+          <p class="hint" data-i18n="offline_hint">
+            برای ساخت دیتابیس آفلاین، برنامه باید باز بماند. می‌توانید هر زمان ادامه بدهید.
+          </p>
+          <label class="field">
+            <span data-i18n="offline_language">زبان دیتابیس</span>
+            <select id="offlineLanguage">
+              <option value="fa">فارسی</option>
+              <option value="en">English</option>
+              <option value="nl">Nederlands</option>
+            </select>
+          </label>
+          <label class="field">
+            <span data-i18n="offline_target">تعداد هدف</span>
+            <input id="offlineTarget" type="number" min="100" step="100" value="500" />
+          </label>
+          <div class="progress-bar">
+            <div id="offlineProgressFill" class="progress-fill"></div>
+          </div>
+          <div class="row">
+            <button id="offlineStart" class="primary" data-i18n="offline_start">
+              شروع / ادامه
+            </button>
+            <button id="offlinePause" data-i18n="offline_pause">توقف</button>
+          </div>
+          <div id="offlineEta" class="status"></div>
+          <div id="offlineStatus" class="status"></div>
         </div>
 
         <div class="card settings-page" data-settings-page="card-theme">

@@ -2,6 +2,10 @@ const STORAGE_KEY = "lingopop_state_v1";
 
 const defaultState = {
   words: [],
+  ui: {
+    searchQuery: "",
+    searchOpen: false,
+  },
   settings: {
     apiKey: "",
     model: "gemini-flash-latest",
@@ -19,6 +23,21 @@ const defaultState = {
     },
     stickyPracticeButtons: true,
     language: "fa",
+    search: {
+      suggestAdd: true,
+      allowSyncToggle: true,
+      syncOnAddDefault: false,
+    },
+    offlineBuilder: {
+      language: "en",
+      targetCount: 500,
+      processedCount: 0,
+      shelfId: "",
+      running: false,
+      avgBatchMs: 0,
+      lastBatchSize: 0,
+      lastUpdatedAt: "",
+    },
     shelves: [
       { id: "default", name: "تمامی لغات", description: "", isDefault: true },
     ],
@@ -27,6 +46,7 @@ const defaultState = {
     practiceShelfId: "default",
     practiceStarted: false,
   },
+  syncProgress: null,
 };
 
 const state = loadState();
@@ -96,6 +116,30 @@ const I18N = {
     copy_all_words: "کپی همه لغت‌ها",
     copy_shelf_words: "کپی لغت‌های یک شلف",
     copy_btn: "کپی",
+    search_placeholder: "جست‌وجو بین همه لغت‌ها...",
+    search_no_result: "این لغت پیدا نشد. اضافه کنیم؟",
+    search_empty: "نتیجه‌ای یافت نشد.",
+    search_add_btn: "افزودن",
+    search_sync_toggle: "همزمان سینک شود",
+    search_settings_title: "تنظیمات جست‌وجو",
+    search_suggest_label: "نمایش پیشنهاد افزودن در جست‌وجو",
+    search_sync_toggle_label: "نمایش سوییچ سینک در جست‌وجو",
+    search_sync_default_label: "سینک پیش‌فرض هنگام افزودن",
+    offline_title: "دیتابیس آفلاین",
+    offline_hint:
+      "برای ساخت دیتابیس آفلاین، برنامه باید باز بماند. می‌توانید هر زمان ادامه بدهید.",
+    offline_language: "زبان دیتابیس",
+    offline_target: "تعداد هدف",
+    offline_start: "شروع / ادامه",
+    offline_pause: "توقف",
+    offline_status_idle: "آماده",
+    offline_status_running: "در حال ساخت دیتابیس...",
+    offline_status_done: "دیتابیس کامل شد.",
+    offline_eta: "زمان تقریبی باقی‌مانده: {time}",
+    sync_suggest_title: "پیشنهاد تنظیمات بهتر",
+    sync_suggest_body:
+      "به نظر می‌رسد تنظیمات فعلی مناسب نیست. پیشنهاد ما: بچ {batch} و کول‌دان {cooldown}s.",
+    sync_suggest_apply: "اعمال پیشنهاد",
     words_shelf_export: "خروجی لغت‌ها با شلف",
     words_shelf_import: "ورود لغت‌ها با شلف",
     words_shelf_import_hint:
@@ -237,6 +281,30 @@ const I18N = {
     copy_all_words: "Copy all words",
     copy_shelf_words: "Copy shelf words",
     copy_btn: "Copy",
+    search_placeholder: "Search across all words...",
+    search_no_result: "No result. Add this word?",
+    search_empty: "No results found.",
+    search_add_btn: "Add",
+    search_sync_toggle: "Sync after add",
+    search_settings_title: "Search Settings",
+    search_suggest_label: "Show add suggestion in search",
+    search_sync_toggle_label: "Show sync toggle in search",
+    search_sync_default_label: "Sync by default on add",
+    offline_title: "Offline Database",
+    offline_hint:
+      "Keep the app open to build the offline database. You can resume anytime.",
+    offline_language: "Database language",
+    offline_target: "Target count",
+    offline_start: "Start / Resume",
+    offline_pause: "Pause",
+    offline_status_idle: "Ready",
+    offline_status_running: "Building database...",
+    offline_status_done: "Database complete.",
+    offline_eta: "Estimated remaining: {time}",
+    sync_suggest_title: "Suggested settings",
+    sync_suggest_body:
+      "Current settings may be too aggressive. Suggested: batch {batch} and cooldown {cooldown}s.",
+    sync_suggest_apply: "Apply suggestion",
     words_shelf_export: "Export words with shelves",
     words_shelf_import: "Import words with shelves",
     words_shelf_import_hint:
@@ -377,6 +445,30 @@ const I18N = {
     copy_all_words: "Kopieer alle woorden",
     copy_shelf_words: "Kopieer woorden uit shelf",
     copy_btn: "Kopiëren",
+    search_placeholder: "Zoek in alle woorden...",
+    search_no_result: "Niet gevonden. Toevoegen?",
+    search_empty: "Geen resultaten gevonden.",
+    search_add_btn: "Toevoegen",
+    search_sync_toggle: "Sync na toevoegen",
+    search_settings_title: "Zoekinstellingen",
+    search_suggest_label: "Toon toevoeg-voorstel in zoeken",
+    search_sync_toggle_label: "Toon sync-schakelaar in zoeken",
+    search_sync_default_label: "Standaard sync bij toevoegen",
+    offline_title: "Offline database",
+    offline_hint:
+      "Laat de app open om de offline database te bouwen. Je kunt later doorgaan.",
+    offline_language: "Database taal",
+    offline_target: "Doelaantal",
+    offline_start: "Start / Hervat",
+    offline_pause: "Pauze",
+    offline_status_idle: "Gereed",
+    offline_status_running: "Database wordt gebouwd...",
+    offline_status_done: "Database is compleet.",
+    offline_eta: "Geschatte resterende tijd: {time}",
+    sync_suggest_title: "Voorgestelde instellingen",
+    sync_suggest_body:
+      "Huidige instellingen zijn mogelijk te agressief. Advies: batch {batch} en cooldown {cooldown}s.",
+    sync_suggest_apply: "Advies toepassen",
     words_shelf_export: "Woorden met shelves exporteren",
     words_shelf_import: "Woorden met shelves importeren",
     words_shelf_import_hint:
@@ -481,7 +573,17 @@ const elements = {
   ioExport: document.getElementById("ioExport"),
   syncWords: document.getElementById("syncWords"),
   syncStatus: document.getElementById("syncStatus"),
+  syncSuggestion: document.getElementById("syncSuggestion"),
+  syncProgressBar: document.getElementById("syncProgressBar"),
+  syncProgressFill: document.getElementById("syncProgressFill"),
   wordList: document.getElementById("wordList"),
+  toggleSearch: document.getElementById("toggleSearch"),
+  searchPanel: document.getElementById("searchPanel"),
+  searchInput: document.getElementById("searchInput"),
+  searchClear: document.getElementById("searchClear"),
+  searchSuggest: document.getElementById("searchSuggest"),
+  searchAdd: document.getElementById("searchAdd"),
+  searchSyncToggle: document.getElementById("searchSyncToggle"),
   copyShelfWords: document.getElementById("copyShelfWords"),
   copyShelfSelect: document.getElementById("copyShelfSelect"),
   copyMode: document.getElementById("copyMode"),
@@ -556,6 +658,16 @@ const elements = {
   customShelfCount: document.getElementById("customShelfCount"),
   createCustomShelf: document.getElementById("createCustomShelf"),
   customShelfStatus: document.getElementById("customShelfStatus"),
+  searchSuggestAdd: document.getElementById("searchSuggestAdd"),
+  searchAllowSync: document.getElementById("searchAllowSync"),
+  searchSyncDefault: document.getElementById("searchSyncDefault"),
+  offlineLanguage: document.getElementById("offlineLanguage"),
+  offlineTarget: document.getElementById("offlineTarget"),
+  offlineStart: document.getElementById("offlineStart"),
+  offlinePause: document.getElementById("offlinePause"),
+  offlineProgressFill: document.getElementById("offlineProgressFill"),
+  offlineEta: document.getElementById("offlineEta"),
+  offlineStatus: document.getElementById("offlineStatus"),
 };
 
 let driveAuth = {
@@ -578,6 +690,29 @@ function init() {
   if (elements.languageSelect) {
     elements.languageSelect.value = state.settings.language || "fa";
   }
+  if (elements.searchSuggestAdd) {
+    elements.searchSuggestAdd.checked = state.settings.search?.suggestAdd ?? true;
+  }
+  if (elements.searchAllowSync) {
+    elements.searchAllowSync.checked =
+      state.settings.search?.allowSyncToggle ?? true;
+  }
+  if (elements.searchSyncDefault) {
+    elements.searchSyncDefault.checked =
+      state.settings.search?.syncOnAddDefault ?? false;
+  }
+  if (elements.offlineLanguage) {
+    elements.offlineLanguage.value =
+      state.settings.offlineBuilder?.language || "en";
+  }
+  if (elements.offlineTarget) {
+    elements.offlineTarget.value = String(
+      state.settings.offlineBuilder?.targetCount || 500
+    );
+  }
+  if (state.settings.offlineBuilder?.running) {
+    state.settings.offlineBuilder.running = false;
+  }
   if (elements.customShelfLanguage) {
     elements.customShelfLanguage.value = state.settings.language || "fa";
   }
@@ -596,6 +731,9 @@ function init() {
   renderShelfSelect();
   renderShelfList();
   renderShelfCards();
+  applySearchState();
+  renderSyncProgress();
+  renderOfflineBuilder();
   updateCopyModeUi();
   wireEvents();
   renderWords();
@@ -629,6 +767,68 @@ function wireEvents() {
     elements.wordInput.value = "";
     setStatus(t("words_added", { count: added }));
   });
+
+  if (elements.toggleSearch) {
+    elements.toggleSearch.addEventListener("click", () => {
+      state.ui.searchOpen = !state.ui.searchOpen;
+      saveState();
+      applySearchState();
+    });
+  }
+
+  if (elements.searchInput) {
+    elements.searchInput.addEventListener("input", (event) => {
+      state.ui.searchQuery = event.target.value;
+      saveState();
+      renderWords();
+      updateSearchSuggest();
+    });
+  }
+
+  if (elements.searchClear) {
+    elements.searchClear.addEventListener("click", () => {
+      state.ui.searchQuery = "";
+      saveState();
+      renderWords();
+      updateSearchSuggest();
+      if (elements.searchInput) {
+        elements.searchInput.value = "";
+        elements.searchInput.focus();
+      }
+    });
+  }
+
+  if (elements.searchAdd) {
+    elements.searchAdd.addEventListener("click", async () => {
+      const query = getSearchQuery();
+      if (!query) return;
+      const added = await addWordsWithCorrection([query], getActiveShelfId());
+      if (added > 0) {
+        const latest = getMostRecentWord();
+        if (
+          latest &&
+          state.settings.search?.allowSyncToggle &&
+          elements.searchSyncToggle?.checked
+        ) {
+          await syncSingleCard(latest);
+        }
+        state.ui.searchQuery = "";
+        saveState();
+        renderWords();
+        updateSearchSuggest();
+        if (elements.searchInput) {
+          elements.searchInput.value = "";
+        }
+      }
+    });
+  }
+
+  if (elements.searchSyncToggle) {
+    elements.searchSyncToggle.addEventListener("change", (event) => {
+      state.settings.search.syncOnAddDefault = event.target.checked;
+      saveState();
+    });
+  }
 
   if (elements.ioImport) {
     elements.ioImport.addEventListener("click", () => {
@@ -694,6 +894,60 @@ function wireEvents() {
         .catch(() => {
           setStatus("کپی انجام نشد.");
         });
+    });
+  }
+
+  if (elements.syncSuggestion) {
+    elements.syncSuggestion.addEventListener("click", (event) => {
+      const button = event.target.closest("button");
+      if (!button) return;
+      const batch = Number(button.dataset.batch);
+      const cooldown = Number(button.dataset.cooldown);
+      if (Number.isFinite(batch)) {
+        state.settings.syncBatchSize = clampNumber(batch, 5, 50);
+        if (elements.syncBatchSize) {
+          elements.syncBatchSize.value = String(state.settings.syncBatchSize);
+        }
+      }
+      if (Number.isFinite(cooldown)) {
+        state.settings.cooldownSeconds = clampNumber(cooldown, 0, 30);
+        if (elements.cooldownSeconds) {
+          elements.cooldownSeconds.value = String(state.settings.cooldownSeconds);
+        }
+      }
+      saveState();
+      hideSyncSuggestion();
+      setStatus(t("settings_saved"));
+    });
+  }
+
+  if (elements.offlineStart) {
+    elements.offlineStart.addEventListener("click", () => {
+      startOfflineBuilder();
+    });
+  }
+
+  if (elements.offlinePause) {
+    elements.offlinePause.addEventListener("click", () => {
+      pauseOfflineBuilder();
+    });
+  }
+
+  if (elements.offlineLanguage) {
+    elements.offlineLanguage.addEventListener("change", (event) => {
+      state.settings.offlineBuilder.language = event.target.value;
+      saveState();
+      renderOfflineBuilder();
+    });
+  }
+
+  if (elements.offlineTarget) {
+    elements.offlineTarget.addEventListener("input", (event) => {
+      const raw = parseInt(event.target.value, 10);
+      const normalized = Number.isFinite(raw) ? raw : 500;
+      state.settings.offlineBuilder.targetCount = clampNumber(normalized, 100, 100000);
+      saveState();
+      renderOfflineBuilder();
     });
   }
 
@@ -902,6 +1156,30 @@ function wireEvents() {
       applyLanguage();
       renderWords();
       renderPractice();
+    });
+  }
+
+  if (elements.searchSuggestAdd) {
+    elements.searchSuggestAdd.addEventListener("change", (event) => {
+      state.settings.search.suggestAdd = event.target.checked;
+      saveState();
+      updateSearchSuggest();
+    });
+  }
+
+  if (elements.searchAllowSync) {
+    elements.searchAllowSync.addEventListener("change", (event) => {
+      state.settings.search.allowSyncToggle = event.target.checked;
+      saveState();
+      updateSearchSuggest();
+    });
+  }
+
+  if (elements.searchSyncDefault) {
+    elements.searchSyncDefault.addEventListener("change", (event) => {
+      state.settings.search.syncOnAddDefault = event.target.checked;
+      saveState();
+      updateSearchSuggest();
     });
   }
 
@@ -1339,6 +1617,272 @@ function clampNumber(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
+let offlineBuilderLoopActive = false;
+
+function getSearchQuery() {
+  return (state.ui.searchQuery || "").trim();
+}
+
+function applySearchState() {
+  if (!elements.searchPanel || !elements.toggleSearch) return;
+  elements.searchPanel.classList.toggle("hidden", !state.ui.searchOpen);
+  elements.toggleSearch.classList.toggle("active", state.ui.searchOpen);
+  if (elements.searchInput) {
+    elements.searchInput.value = state.ui.searchQuery || "";
+    if (state.ui.searchOpen) {
+      elements.searchInput.focus();
+    }
+  }
+  updateSearchSuggest();
+}
+
+function updateSearchSuggest() {
+  if (!elements.searchSuggest) return;
+  const query = getSearchQuery();
+  const hasResults = query
+    ? state.words.some((word) =>
+        normalizeWord(word.word).includes(normalizeWord(query))
+      )
+    : true;
+  const shouldShow =
+    state.settings.search?.suggestAdd &&
+    state.ui.searchOpen &&
+    query &&
+    !hasResults;
+  elements.searchSuggest.classList.toggle("hidden", !shouldShow);
+  if (elements.searchSyncToggle) {
+    const allow = state.settings.search?.allowSyncToggle ?? true;
+    elements.searchSyncToggle.checked =
+      state.settings.search?.syncOnAddDefault ?? false;
+    elements.searchSyncToggle
+      .closest(".search-sync-row")
+      ?.classList.toggle("hidden", !allow);
+  }
+}
+
+function getMostRecentWord() {
+  if (!state.words.length) return null;
+  return [...state.words].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  )[0];
+}
+
+function renderSyncProgress() {
+  if (!elements.syncProgressBar || !elements.syncProgressFill) return;
+  if (!state.syncProgress) {
+    elements.syncProgressBar.classList.add("hidden");
+    elements.syncProgressFill.style.width = "0%";
+    return;
+  }
+  const { total, processed } = state.syncProgress;
+  const percent = total ? Math.min(100, Math.round((processed / total) * 100)) : 0;
+  elements.syncProgressBar.classList.remove("hidden");
+  elements.syncProgressFill.style.width = `${percent}%`;
+}
+
+function showSyncSuggestion(batch, cooldown) {
+  if (!elements.syncSuggestion) return;
+  elements.syncSuggestion.innerHTML = `
+    <strong>${t("sync_suggest_title")}</strong>
+    <span>${t("sync_suggest_body", { batch, cooldown })}</span>
+    <button class="primary" data-batch="${batch}" data-cooldown="${cooldown}">
+      ${t("sync_suggest_apply")}
+    </button>
+  `;
+  elements.syncSuggestion.classList.remove("hidden");
+}
+
+function hideSyncSuggestion() {
+  if (!elements.syncSuggestion) return;
+  elements.syncSuggestion.classList.add("hidden");
+  elements.syncSuggestion.innerHTML = "";
+}
+
+function suggestSyncTuning() {
+  const currentBatch = state.settings.syncBatchSize || 20;
+  const currentCooldown = state.settings.cooldownSeconds ?? 2;
+  const batch = clampNumber(Math.floor(currentBatch / 2), 5, 50);
+  const cooldown = clampNumber(currentCooldown + 2, 1, 30);
+  return { batch, cooldown };
+}
+
+function formatDuration(ms) {
+  if (!Number.isFinite(ms) || ms <= 0) return "—";
+  const totalSeconds = Math.round(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  if (minutes > 0) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
+}
+
+function renderOfflineBuilder() {
+  if (!elements.offlineProgressFill || !elements.offlineStatus) return;
+  const builder = state.settings.offlineBuilder;
+  const target = builder.targetCount || 0;
+  const processed = builder.processedCount || 0;
+  const percent = target ? Math.min(100, Math.round((processed / target) * 100)) : 0;
+  elements.offlineProgressFill.style.width = `${percent}%`;
+  if (elements.offlineEta) {
+    const batchSize = Math.max(1, builder.lastBatchSize || state.settings.syncBatchSize);
+    const remaining = Math.max(0, target - processed);
+    const estimatedMs =
+      builder.avgBatchMs && remaining
+        ? (remaining / batchSize) * builder.avgBatchMs
+        : 0;
+    elements.offlineEta.textContent = remaining
+      ? t("offline_eta", { time: formatDuration(estimatedMs) })
+      : "";
+  }
+  if (builder.processedCount >= target && target > 0) {
+    elements.offlineStatus.textContent = t("offline_status_done");
+  } else if (builder.running) {
+    elements.offlineStatus.textContent = t("offline_status_running");
+  } else {
+    elements.offlineStatus.textContent = t("offline_status_idle");
+  }
+  if (elements.offlineStart) {
+    elements.offlineStart.disabled = builder.running;
+  }
+  if (elements.offlinePause) {
+    elements.offlinePause.disabled = !builder.running;
+  }
+}
+
+function getOfflineShelfName(language) {
+  const langName = getLanguageName(language);
+  return `Offline DB (${langName})`;
+}
+
+function countWordsInShelf(shelfId) {
+  return state.words.filter((word) => (word.shelfId || "default") === shelfId)
+    .length;
+}
+
+function startOfflineBuilder() {
+  const builder = state.settings.offlineBuilder;
+  if (!builder) return;
+  const language = elements.offlineLanguage?.value || builder.language || "en";
+  const targetRaw = parseInt(elements.offlineTarget?.value, 10);
+  const targetCount = clampNumber(
+    Number.isFinite(targetRaw) ? targetRaw : builder.targetCount || 500,
+    100,
+    100000
+  );
+  builder.language = language;
+  builder.targetCount = targetCount;
+  const shelfName = getOfflineShelfName(language);
+  const shelf = getOrCreateShelfByName(shelfName, "Offline database");
+  builder.shelfId = shelf.id;
+  builder.processedCount = countWordsInShelf(shelf.id);
+  builder.running = true;
+  builder.lastUpdatedAt = new Date().toISOString();
+  saveState();
+  renderOfflineBuilder();
+  runOfflineBuilderLoop();
+}
+
+function pauseOfflineBuilder() {
+  const builder = state.settings.offlineBuilder;
+  if (!builder) return;
+  builder.running = false;
+  builder.lastUpdatedAt = new Date().toISOString();
+  saveState();
+  renderOfflineBuilder();
+}
+
+async function runOfflineBuilderLoop() {
+  if (offlineBuilderLoopActive) return;
+  offlineBuilderLoopActive = true;
+  try {
+    const builder = state.settings.offlineBuilder;
+    let emptyRounds = 0;
+    while (builder.running) {
+      const target = builder.targetCount || 0;
+      if (builder.processedCount >= target && target > 0) {
+        builder.running = false;
+        saveState();
+        renderOfflineBuilder();
+        break;
+      }
+
+      const batchSize = Math.min(
+        state.settings.syncBatchSize || 20,
+        Math.max(1, target - builder.processedCount)
+      );
+      const start = Date.now();
+      let words = [];
+      try {
+        words = await generateShelfWords(
+          "general vocabulary",
+          "mixed",
+          batchSize,
+          builder.language
+        );
+      } catch (error) {
+        console.error(error);
+        builder.running = false;
+        saveState();
+        renderOfflineBuilder();
+        break;
+      }
+
+      const existing = new Set(state.words.map((word) => normalizeWord(word.word)));
+      const filtered = words
+        .map((word) => (typeof word === "string" ? word.trim() : ""))
+        .filter((word) => word && !existing.has(normalizeWord(word)));
+
+      if (!filtered.length) {
+        emptyRounds += 1;
+        if (emptyRounds >= 3) {
+          builder.running = false;
+          saveState();
+          renderOfflineBuilder();
+          break;
+        }
+        await sleep(getCooldownSeconds() * 1000);
+        continue;
+      }
+      emptyRounds = 0;
+
+      try {
+        const batchData = await generateCardBatchData(filtered);
+        const cards = Array.isArray(batchData) ? batchData : [];
+        const prepared = cards.map((entry) => ({
+          word: entry.word || "",
+          meaningsByLang: entry.meanings || entry.meaningsByLang || {},
+          meaningFa: entry.meaningFa || "",
+          meaningEn: entry.meaningEn || "",
+          pronunciation: entry.pronunciation || "",
+          example: entry.example || "",
+          synonyms: Array.isArray(entry.synonyms) ? entry.synonyms : [],
+          shelfId: builder.shelfId,
+        }));
+        const result = addCardsFromJson(prepared, builder.shelfId);
+        builder.processedCount += result.added || 0;
+      } catch (error) {
+        console.error(error);
+        builder.running = false;
+        saveState();
+        renderOfflineBuilder();
+        break;
+      }
+
+      const duration = Date.now() - start;
+      builder.avgBatchMs = builder.avgBatchMs
+        ? builder.avgBatchMs * 0.7 + duration * 0.3
+        : duration;
+      builder.lastBatchSize = batchSize;
+      builder.lastUpdatedAt = new Date().toISOString();
+      saveState();
+      renderOfflineBuilder();
+      await sleep(getCooldownSeconds() * 1000);
+    }
+  } finally {
+    offlineBuilderLoopActive = false;
+  }
+}
 function getCooldownSeconds() {
   return clampNumber(state.settings.cooldownSeconds ?? 2, 0, 30);
 }
@@ -1818,6 +2362,14 @@ function loadState() {
       settings: {
         ...structuredClone(defaultState.settings),
         ...(parsed.settings || {}),
+        search: {
+          ...structuredClone(defaultState.settings.search),
+          ...(parsed.settings?.search || {}),
+        },
+        offlineBuilder: {
+          ...structuredClone(defaultState.settings.offlineBuilder),
+          ...(parsed.settings?.offlineBuilder || {}),
+        },
       },
     };
   } catch (error) {
@@ -1946,12 +2498,31 @@ function renderWords() {
     return;
   }
   const activeShelfId = getActiveShelfId();
-  const visibleWords = state.words.filter(
-    (item) => (item.shelfId || "default") === activeShelfId
-  );
+  const query = getSearchQuery();
+  const isSearching = Boolean(query) && state.ui.searchOpen;
+  const normalizedQuery = normalizeWord(query || "");
+  const visibleWords = isSearching
+    ? state.words.filter((item) => {
+        const haystack = [
+          item.word,
+          item.meaningFa,
+          item.meaningEn,
+          item.example,
+          (item.synonyms || []).join(" "),
+          item.meaningsByLang?.fa,
+          item.meaningsByLang?.en,
+          item.meaningsByLang?.nl,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(normalizedQuery);
+      })
+    : state.words.filter((item) => (item.shelfId || "default") === activeShelfId);
   if (!visibleWords.length) {
-    elements.wordList.innerHTML =
-      "<p class='empty-state'>در این شلف لغتی وجود ندارد.</p>";
+    elements.wordList.innerHTML = isSearching
+      ? `<p class='empty-state'>${t("search_empty")}</p>`
+      : "<p class='empty-state'>در این شلف لغتی وجود ندارد.</p>";
     return;
   }
   elements.wordList.innerHTML = "";
@@ -2103,11 +2674,23 @@ async function syncAllWords() {
   const pending = state.words.filter((item) => !isCardComplete(item));
   if (!pending.length) {
     setStatus(t("sync_all_none"));
+    state.syncProgress = null;
+    saveState();
+    renderSyncProgress();
+    hideSyncSuggestion();
     return;
   }
 
   elements.syncWords.disabled = true;
   elements.syncWords.classList.add("cooldown");
+  hideSyncSuggestion();
+  const previousProcessed = state.syncProgress?.processed || 0;
+  state.syncProgress = {
+    total: previousProcessed + pending.length,
+    processed: previousProcessed,
+  };
+  saveState();
+  renderSyncProgress();
   showToast(t("sync_progress", { done: 0, total: pending.length }));
   setStatus(t("sync_progress", { done: 0, total: pending.length }));
   let syncOk = true;
@@ -2169,6 +2752,8 @@ async function syncAllWords() {
           updatedCount += 1;
         });
         processedCount += chunk.length;
+        state.syncProgress.processed = previousProcessed + updatedCount;
+        renderSyncProgress();
         saveState();
         renderWords();
         setStatus(
@@ -2184,6 +2769,8 @@ async function syncAllWords() {
       } catch (error) {
         console.error(error);
         syncOk = false;
+        const recommended = suggestSyncTuning();
+        showSyncSuggestion(recommended.batch, recommended.cooldown);
         setStatus(
           t("sync_partial_done", {
             done: processedCount,
@@ -2200,10 +2787,17 @@ async function syncAllWords() {
       setStatus(
         missing ? t("sync_partial", { missing }) : t("sync_done")
       );
+      if (!missing) {
+        state.syncProgress = null;
+        saveState();
+        renderSyncProgress();
+      }
     }
   } catch (error) {
     syncOk = false;
     console.error(error);
+    const recommended = suggestSyncTuning();
+    showSyncSuggestion(recommended.batch, recommended.cooldown);
     setStatus(error.message || t("sync_error"));
     showToast(error.message || t("sync_error"));
   } finally {
