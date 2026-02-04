@@ -167,7 +167,7 @@
           <div class="sheet-panel">
             <div class="sheet-handle"></div>
             <label class="field">
-              <span>زبان</span>
+              <span data-i18n="practice_language_label">زبان</span>
               <select id="practiceLanguage">
                 <option value="fa">فارسی</option>
                 <option value="en">English</option>
@@ -175,7 +175,7 @@
               </select>
             </label>
             <label class="field">
-              <span>شلف</span>
+              <span data-i18n="practice_shelf_label">شلف</span>
               <select id="practiceShelf"></select>
             </label>
             <div class="g5-boxes sheet-boxes">
@@ -186,7 +186,9 @@
               <div id="g5Boxes" class="g5-boxes-inner"></div>
             </div>
             <div id="g5Counts" class="g5-counts"></div>
-            <button id="startPractice" class="primary">شروع تمرین</button>
+            <button id="startPractice" class="primary" data-i18n="practice_start_btn">
+              شروع تمرین
+            </button>
           </div>
         </div>
       </section>
@@ -200,59 +202,59 @@
         <div id="settingsMenu" class="settings-menu">
           <button class="settings-item" data-settings-target="google-api">
             <i class="fa-solid fa-key"></i>
-            تنظیمات Google API
+            <span data-i18n="menu_google_api">تنظیمات Google API</span>
           </button>
           <button class="settings-item" data-settings-target="drive">
             <i class="fa-brands fa-google-drive"></i>
-            سینک با Google Drive
+            <span data-i18n="menu_drive">سینک با Google Drive</span>
           </button>
           <button class="settings-item" data-settings-target="json">
             <i class="fa-solid fa-file-lines"></i>
-            ورود و خروجی JSON
+            <span data-i18n="menu_json">ورود و خروجی JSON</span>
           </button>
           <button class="settings-item" data-settings-target="language">
             <i class="fa-solid fa-language"></i>
-            زبان برنامه
+            <span data-i18n="menu_language">زبان برنامه</span>
           </button>
           <button class="settings-item" data-settings-target="theme">
             <i class="fa-solid fa-palette"></i>
-            نمای ظاهری
+            <span data-i18n="menu_theme">نمای ظاهری</span>
           </button>
           <button class="settings-item" data-settings-target="search">
             <i class="fa-solid fa-magnifying-glass"></i>
-            جست‌وجو
+            <span data-i18n="menu_search">جست‌وجو</span>
           </button>
           <button class="settings-item" data-settings-target="practice">
             <i class="fa-solid fa-dumbbell"></i>
-            تنظیمات تمرین
+            <span data-i18n="menu_practice">تنظیمات تمرین</span>
           </button>
           <button class="settings-item" data-settings-target="shelves">
             <i class="fa-solid fa-layer-group"></i>
-            مدیریت شلف‌ها
+            <span data-i18n="menu_shelves">مدیریت شلف‌ها</span>
           </button>
           <button class="settings-item" data-settings-target="custom-shelf">
             <i class="fa-solid fa-wand-magic-sparkles"></i>
-            شلف اختصاصی
+            <span data-i18n="menu_custom_shelf">شلف اختصاصی</span>
           </button>
           <button class="settings-item" data-settings-target="offline-db">
             <i class="fa-solid fa-database"></i>
-            دیتابیس آفلاین
+            <span data-i18n="menu_offline_db">دیتابیس آفلاین</span>
           </button>
           <button class="settings-item" data-settings-target="card-theme">
             <i class="fa-solid fa-id-card"></i>
-            تم کارت‌های لغت
+            <span data-i18n="menu_card_theme">تم کارت‌های لغت</span>
           </button>
           <button class="settings-item" data-settings-target="error-guide">
             <i class="fa-solid fa-triangle-exclamation"></i>
-            راهنمای خطاها
+            <span data-i18n="menu_error_guide">راهنمای خطاها</span>
           </button>
           <button class="settings-item" data-settings-target="about">
             <i class="fa-solid fa-circle-info"></i>
-            درباره نرم‌افزار
+            <span data-i18n="menu_about">درباره نرم‌افزار</span>
           </button>
           <button class="settings-item" data-settings-target="update">
             <i class="fa-solid fa-arrows-rotate"></i>
-            بروزرسانی
+            <span data-i18n="menu_update">بروزرسانی</span>
           </button>
         </div>
 
@@ -316,8 +318,10 @@
             معنی فارسی، معنی انگلیسی، جمله نمونه و هم‌معنی‌ها را تولید کند.
           </p>
           <div class="row">
-            <button id="apiTest" class="icon-button">تست</button>
-            <button id="apiTestAll" class="icon-button">تست همه مدل‌ها</button>
+            <button id="apiTest" class="icon-button" data-i18n="api_test_btn">تست</button>
+            <button id="apiTestAll" class="icon-button" data-i18n="api_test_all_btn">
+              تست همه مدل‌ها
+            </button>
             <div id="apiTestStatus" class="status"></div>
             <div id="apiTestResult" class="status"></div>
           </div>
@@ -482,38 +486,44 @@
         </div>
 
         <div class="card settings-page" data-settings-page="shelves">
-          <h2>مدیریت شلف‌ها</h2>
+          <h2 data-i18n="shelf_manage_title">مدیریت شلف‌ها</h2>
           <div class="row">
-            <input id="shelfName" type="text" placeholder="نام شلف" />
-            <button id="addShelf">افزودن شلف</button>
+            <input id="shelfName" type="text" placeholder="نام شلف" data-i18n-placeholder="shelf_name_placeholder" />
+            <button id="addShelf" data-i18n="add_shelf_btn">افزودن شلف</button>
           </div>
           <div id="shelfList" class="shelf-list"></div>
         </div>
 
         <div class="card settings-page" data-settings-page="custom-shelf">
-          <h2>شلف اختصاصی</h2>
+          <h2 data-i18n="custom_shelf_title">شلف اختصاصی</h2>
           <label class="field">
-            <span>نام شلف</span>
-            <input id="customShelfName" type="text" placeholder="مثلا تجربه کاربر" />
+            <span data-i18n="shelf_name_label">نام شلف</span>
+            <input
+              id="customShelfName"
+              type="text"
+              placeholder="مثلا تجربه کاربر"
+              data-i18n-placeholder="custom_shelf_name_placeholder"
+            />
           </label>
           <label class="field">
-            <span>توضیح</span>
+            <span data-i18n="shelf_desc_label">توضیح</span>
             <input
               id="customShelfDescription"
               type="text"
               placeholder="مثلا لغت‌های تخصصی تجربه کاربر"
+              data-i18n-placeholder="custom_shelf_desc_placeholder"
             />
           </label>
           <label class="field">
-            <span>سطح</span>
+            <span data-i18n="level_label">سطح</span>
             <select id="customShelfLevel">
-              <option value="beginner">مبتدی</option>
-              <option value="intermediate">متوسط</option>
-              <option value="advanced">پیشرفته</option>
+              <option value="beginner" data-i18n="level_beginner">مبتدی</option>
+              <option value="intermediate" data-i18n="level_intermediate">متوسط</option>
+              <option value="advanced" data-i18n="level_advanced">پیشرفته</option>
             </select>
           </label>
           <label class="field">
-            <span>زبان لغت‌ها</span>
+            <span data-i18n="words_language_label">زبان لغت‌ها</span>
             <select id="customShelfLanguage">
               <option value="fa">فارسی</option>
               <option value="en">English</option>
@@ -521,11 +531,15 @@
             </select>
           </label>
           <label class="field">
-            <span>تعداد لغت</span>
+            <span data-i18n="word_count_label">تعداد لغت</span>
             <input id="customShelfCount" type="number" min="5" max="200" value="30" />
           </label>
-          <button id="createCustomShelf" class="primary">ایجاد شلف و افزودن لغت‌ها</button>
-          <p class="hint">برای ساخت شلف اختصاصی، کلید API باید تنظیم شده باشد.</p>
+          <button id="createCustomShelf" class="primary" data-i18n="custom_shelf_create">
+            ایجاد شلف و افزودن لغت‌ها
+          </button>
+          <p class="hint" data-i18n="custom_shelf_hint">
+            برای ساخت شلف اختصاصی، کلید API باید تنظیم شده باشد.
+          </p>
           <div id="customShelfStatus" class="status"></div>
         </div>
 
@@ -539,15 +553,22 @@
           </p>
           <label class="field">
             <span data-i18n="offline_topic">موضوع</span>
-            <input id="offlineTopic" type="text" value="general vocabulary" />
+            <input
+              id="offlineTopic"
+              type="text"
+              data-i18n-placeholder="offline_topic_placeholder"
+              placeholder="General vocabulary"
+            />
           </label>
           <label class="field">
             <span data-i18n="offline_level">سطح</span>
             <select id="offlineLevel">
-              <option value="mixed">Mixed</option>
-              <option value="beginner">Beginner</option>
-              <option value="intermediate">Intermediate</option>
-              <option value="advanced">Advanced</option>
+              <option value="mixed" data-i18n="level_mixed">Mixed</option>
+              <option value="beginner" data-i18n="level_beginner">Beginner</option>
+              <option value="intermediate" data-i18n="level_intermediate">
+                Intermediate
+              </option>
+              <option value="advanced" data-i18n="level_advanced">Advanced</option>
             </select>
           </label>
           <label class="field">
@@ -582,7 +603,9 @@
           <h2 data-i18n="card_theme_title">تم کارت‌های لغت</h2>
           <div class="theme-card-layout">
             <div class="theme-chips" id="cardThemeChips">
-              <button class="theme-chip" data-card-theme="inherit">طبق تم کلی</button>
+              <button class="theme-chip" data-card-theme="inherit" data-i18n="card_theme_inherit">
+                طبق تم کلی
+              </button>
               <button class="theme-chip" data-card-theme="clean">Clean</button>
               <button class="theme-chip" data-card-theme="soft">Soft UI</button>
               <button class="theme-chip" data-card-theme="soft-custom">Soft UI Custom</button>
@@ -597,15 +620,15 @@
             <div class="theme-preview">
               <div class="theme-controls hidden" id="cardThemeControls">
                 <label class="field">
-                  <span>رنگ تیتر</span>
+                  <span data-i18n="card_title_color_label">رنگ تیتر</span>
                   <input id="cardTitleColor" type="color" value="#2f2f37" />
                 </label>
                 <label class="field">
-                  <span>رنگ متن اصلی</span>
+                  <span data-i18n="card_text_color_label">رنگ متن اصلی</span>
                   <input id="cardTextColor" type="color" value="#3f3f4a" />
                 </label>
                 <label class="field">
-                  <span>رنگ پس‌زمینه کارت</span>
+                  <span data-i18n="card_bg_color_label">رنگ پس‌زمینه کارت</span>
                   <input id="cardBgColor" type="color" value="#ffffff" />
                 </label>
               </div>
@@ -642,23 +665,31 @@
         </div>
 
         <div class="card settings-page" data-settings-page="error-guide">
-          <h2>راهنمای کدهای خطا</h2>
+          <h2 data-i18n="error_guide_title">راهنمای کدهای خطا</h2>
           <div class="word-meta">
             <div class="word-meta-item">
               <span class="meta-label">429</span>
-              <span class="meta-value dir-rtl">سهمیه یا محدودیت درخواست‌ها تمام شده است.</span>
+              <span class="meta-value dir-rtl" data-i18n="error_429">
+                سهمیه یا محدودیت درخواست‌ها تمام شده است.
+              </span>
             </div>
             <div class="word-meta-item">
               <span class="meta-label">401 / 403</span>
-              <span class="meta-value dir-rtl">کلید API نامعتبر است یا دسترسی ندارید.</span>
+              <span class="meta-value dir-rtl" data-i18n="error_401">
+                کلید API نامعتبر است یا دسترسی ندارید.
+              </span>
             </div>
             <div class="word-meta-item">
               <span class="meta-label">400</span>
-              <span class="meta-value dir-rtl">درخواست نامعتبر است یا ورودی‌ها ناقص هستند.</span>
+              <span class="meta-value dir-rtl" data-i18n="error_400">
+                درخواست نامعتبر است یا ورودی‌ها ناقص هستند.
+              </span>
             </div>
             <div class="word-meta-item">
               <span class="meta-label">500</span>
-              <span class="meta-value dir-rtl">خطای داخلی سرویس. کمی بعد دوباره تلاش کنید.</span>
+              <span class="meta-value dir-rtl" data-i18n="error_500">
+                خطای داخلی سرویس. کمی بعد دوباره تلاش کنید.
+              </span>
             </div>
           </div>
         </div>
@@ -683,12 +714,14 @@
         </div>
 
         <div class="card settings-page" data-settings-page="update">
-          <h2>بروزرسانی برنامه</h2>
-          <p class="about-text">
+          <h2 data-i18n="update_title">بروزرسانی برنامه</h2>
+          <p class="about-text" data-i18n="update_text">
             با زدن دکمه زیر، نسخه جدید فایل‌ها از سرور دریافت می‌شود. تنظیمات شما
             (مثل کلید API و تم انتخابی) حفظ خواهد شد و لغت‌ها از بین نمی‌روند.
           </p>
-          <button id="forceUpdate" class="primary">بروزرسانی</button>
+          <button id="forceUpdate" class="primary" data-i18n="update_btn">
+            بروزرسانی
+          </button>
           <div id="updateStatus" class="status"></div>
         </div>
       </section>
@@ -699,10 +732,10 @@
       <div class="sheet-panel">
         <div class="sheet-handle"></div>
         <label class="field">
-          <span>انتقال به شلف</span>
+          <span data-i18n="move_shelf_label">انتقال به شلف</span>
           <select id="shelfSheetSelect"></select>
         </label>
-        <button id="shelfSheetApply" class="primary">اعمال</button>
+        <button id="shelfSheetApply" class="primary" data-i18n="apply_btn">اعمال</button>
       </div>
     </div>
 

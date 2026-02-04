@@ -128,11 +128,68 @@ const I18N = {
     copy_all_words: "کپی همه لغت‌ها",
     copy_shelf_words: "کپی لغت‌های یک شلف",
     copy_btn: "کپی",
+    remove_btn: "حذف",
+    copy_no_shelf: "شلف پیدا نشد.",
+    copy_empty: "لغتی برای کپی وجود ندارد.",
+    copy_done: "لغات کپی شد.",
+    copy_fail: "کپی انجام نشد.",
+    empty_words: "هیچ لغتی وجود ندارد.",
+    empty_shelf: "در این شلف لغتی وجود ندارد.",
+    model_not_found: "مدلی یافت نشد.",
+    model_updated: "مدل‌ها به‌روزرسانی شد.",
+    update_in_progress: "در حال بروزرسانی...",
     search_placeholder: "جست‌وجو بین همه لغت‌ها...",
     search_no_result: "این لغت پیدا نشد. اضافه کنیم؟",
     search_empty: "نتیجه‌ای یافت نشد.",
     search_add_btn: "افزودن",
     search_sync_toggle: "همزمان سینک شود",
+    practice_language_label: "زبان",
+    practice_shelf_label: "شلف",
+    practice_start_btn: "شروع تمرین",
+    menu_google_api: "تنظیمات Google API",
+    menu_drive: "سینک با Google Drive",
+    menu_json: "ورود و خروجی JSON",
+    menu_language: "زبان برنامه",
+    menu_theme: "نمای ظاهری",
+    menu_search: "جست‌وجو",
+    menu_practice: "تنظیمات تمرین",
+    menu_shelves: "مدیریت شلف‌ها",
+    menu_custom_shelf: "شلف اختصاصی",
+    menu_offline_db: "دیتابیس آفلاین",
+    menu_card_theme: "تم کارت‌های لغت",
+    menu_error_guide: "راهنمای خطاها",
+    menu_about: "درباره نرم‌افزار",
+    menu_update: "بروزرسانی",
+    shelf_manage_title: "مدیریت شلف‌ها",
+    shelf_name_placeholder: "نام شلف",
+    add_shelf_btn: "افزودن شلف",
+    custom_shelf_title: "شلف اختصاصی",
+    shelf_name_label: "نام شلف",
+    custom_shelf_name_placeholder: "مثلا تجربه کاربر",
+    shelf_desc_label: "توضیح",
+    custom_shelf_desc_placeholder: "مثلا لغت‌های تخصصی تجربه کاربر",
+    level_label: "سطح",
+    level_mixed: "ترکیبی",
+    level_beginner: "مبتدی",
+    level_intermediate: "متوسط",
+    level_advanced: "پیشرفته",
+    words_language_label: "زبان لغت‌ها",
+    word_count_label: "تعداد لغت",
+    custom_shelf_create: "ایجاد شلف و افزودن لغت‌ها",
+    custom_shelf_hint: "برای ساخت شلف اختصاصی، کلید API باید تنظیم شده باشد.",
+    api_test_btn: "تست",
+    api_test_all_btn: "تست همه مدل‌ها",
+    error_guide_title: "راهنمای کدهای خطا",
+    error_429: "سهمیه یا محدودیت درخواست‌ها تمام شده است.",
+    error_401: "کلید API نامعتبر است یا دسترسی ندارید.",
+    error_400: "درخواست نامعتبر است یا ورودی‌ها ناقص هستند.",
+    error_500: "خطای داخلی سرویس. کمی بعد دوباره تلاش کنید.",
+    update_title: "بروزرسانی برنامه",
+    update_text:
+      "با زدن دکمه زیر، نسخه جدید فایل‌ها از سرور دریافت می‌شود. تنظیمات شما (مثل کلید API و تم انتخابی) حفظ خواهد شد و لغت‌ها از بین نمی‌روند.",
+    update_btn: "بروزرسانی",
+    move_shelf_label: "انتقال به شلف",
+    apply_btn: "اعمال",
     search_settings_title: "تنظیمات جست‌وجو",
     search_suggest_label: "نمایش پیشنهاد افزودن در جست‌وجو",
     search_sync_toggle_label: "نمایش سوییچ سینک در جست‌وجو",
@@ -144,6 +201,7 @@ const I18N = {
       "محدودیت روزانه نسخه رایگان گوگل حدود ۱۴۰۰ لغت است. پیشنهاد ما نصف این مقدار است.",
     offline_language: "زبان دیتابیس",
     offline_topic: "موضوع",
+    offline_topic_placeholder: "واژگان عمومی",
     offline_level: "سطح",
     offline_target: "تعداد هدف",
     offline_max_minutes: "حداکثر زمان (دقیقه)",
@@ -179,6 +237,10 @@ const I18N = {
       "فرمت: آرایه‌ای از کارت‌ها با فیلد word. کارت‌های تکراری اضافه نمی‌شوند.",
     theme_title: "نمای ظاهری",
     card_theme_title: "تم کارت‌های لغت",
+    card_theme_inherit: "طبق تم کلی",
+    card_title_color_label: "رنگ تیتر",
+    card_text_color_label: "رنگ متن اصلی",
+    card_bg_color_label: "رنگ پس‌زمینه کارت",
     card_preview_hint: "پیش‌نمایش کارت لغت",
     practice_settings_title: "تنظیمات تمرین",
     sticky_buttons_label: "چسباندن دکمه‌های تمرین در پایین صفحه",
@@ -307,11 +369,68 @@ const I18N = {
     copy_all_words: "Copy all words",
     copy_shelf_words: "Copy shelf words",
     copy_btn: "Copy",
+    remove_btn: "Remove",
+    copy_no_shelf: "Shelf not found.",
+    copy_empty: "No words to copy.",
+    copy_done: "Words copied.",
+    copy_fail: "Copy failed.",
+    empty_words: "No words available.",
+    empty_shelf: "No words in this shelf.",
+    model_not_found: "No model found.",
+    model_updated: "Models updated.",
+    update_in_progress: "Updating...",
     search_placeholder: "Search across all words...",
     search_no_result: "No result. Add this word?",
     search_empty: "No results found.",
     search_add_btn: "Add",
     search_sync_toggle: "Sync after add",
+    practice_language_label: "Language",
+    practice_shelf_label: "Shelf",
+    practice_start_btn: "Start practice",
+    menu_google_api: "Google API Settings",
+    menu_drive: "Google Drive Sync",
+    menu_json: "JSON Import/Export",
+    menu_language: "App language",
+    menu_theme: "Appearance",
+    menu_search: "Search",
+    menu_practice: "Practice settings",
+    menu_shelves: "Shelf management",
+    menu_custom_shelf: "Custom shelf",
+    menu_offline_db: "Offline database",
+    menu_card_theme: "Word card theme",
+    menu_error_guide: "Error guide",
+    menu_about: "About",
+    menu_update: "Update",
+    shelf_manage_title: "Shelf management",
+    shelf_name_placeholder: "Shelf name",
+    add_shelf_btn: "Add shelf",
+    custom_shelf_title: "Custom shelf",
+    shelf_name_label: "Shelf name",
+    custom_shelf_name_placeholder: "e.g. UX",
+    shelf_desc_label: "Description",
+    custom_shelf_desc_placeholder: "e.g. UX vocabulary",
+    level_label: "Level",
+    level_mixed: "Mixed",
+    level_beginner: "Beginner",
+    level_intermediate: "Intermediate",
+    level_advanced: "Advanced",
+    words_language_label: "Words language",
+    word_count_label: "Word count",
+    custom_shelf_create: "Create shelf and add words",
+    custom_shelf_hint: "API key must be set to create a custom shelf.",
+    api_test_btn: "Test",
+    api_test_all_btn: "Test all models",
+    error_guide_title: "Error codes",
+    error_429: "Quota or request limit exceeded.",
+    error_401: "Invalid API key or no access.",
+    error_400: "Invalid request or missing inputs.",
+    error_500: "Internal service error. Try again later.",
+    update_title: "App update",
+    update_text:
+      "Clicking the button fetches the latest files. Your settings (API key, theme, etc.) and words are preserved.",
+    update_btn: "Update",
+    move_shelf_label: "Move to shelf",
+    apply_btn: "Apply",
     search_settings_title: "Search Settings",
     search_suggest_label: "Show add suggestion in search",
     search_sync_toggle_label: "Show sync toggle in search",
@@ -323,6 +442,7 @@ const I18N = {
       "Google free tier daily limit is about 1400 words. We suggest half.",
     offline_language: "Database language",
     offline_topic: "Topic",
+    offline_topic_placeholder: "General vocabulary",
     offline_level: "Level",
     offline_target: "Target count",
     offline_max_minutes: "Max time (minutes)",
@@ -357,6 +477,10 @@ const I18N = {
     cards_import_hint: "Format: array of cards with word field. Duplicates are skipped.",
     theme_title: "Appearance",
     card_theme_title: "Word card theme",
+    card_theme_inherit: "Follow app theme",
+    card_title_color_label: "Title color",
+    card_text_color_label: "Main text color",
+    card_bg_color_label: "Card background",
     card_preview_hint: "Word card preview",
     practice_settings_title: "Practice Settings",
     sticky_buttons_label: "Stick practice buttons to bottom",
@@ -485,11 +609,68 @@ const I18N = {
     copy_all_words: "Kopieer alle woorden",
     copy_shelf_words: "Kopieer woorden uit shelf",
     copy_btn: "Kopiëren",
+    remove_btn: "Verwijderen",
+    copy_no_shelf: "Shelf niet gevonden.",
+    copy_empty: "Geen woorden om te kopiëren.",
+    copy_done: "Woorden gekopieerd.",
+    copy_fail: "Kopiëren mislukt.",
+    empty_words: "Geen woorden beschikbaar.",
+    empty_shelf: "Geen woorden in deze shelf.",
+    model_not_found: "Geen model gevonden.",
+    model_updated: "Modellen bijgewerkt.",
+    update_in_progress: "Bezig met bijwerken...",
     search_placeholder: "Zoek in alle woorden...",
     search_no_result: "Niet gevonden. Toevoegen?",
     search_empty: "Geen resultaten gevonden.",
     search_add_btn: "Toevoegen",
     search_sync_toggle: "Sync na toevoegen",
+    practice_language_label: "Taal",
+    practice_shelf_label: "Shelf",
+    practice_start_btn: "Start oefenen",
+    menu_google_api: "Google API-instellingen",
+    menu_drive: "Google Drive synchronisatie",
+    menu_json: "JSON import/export",
+    menu_language: "App taal",
+    menu_theme: "Uiterlijk",
+    menu_search: "Zoeken",
+    menu_practice: "Oefeninstellingen",
+    menu_shelves: "Shelf beheer",
+    menu_custom_shelf: "Custom shelf",
+    menu_offline_db: "Offline database",
+    menu_card_theme: "Kaartthema",
+    menu_error_guide: "Foutgids",
+    menu_about: "Over",
+    menu_update: "Bijwerken",
+    shelf_manage_title: "Shelf beheer",
+    shelf_name_placeholder: "Shelf naam",
+    add_shelf_btn: "Shelf toevoegen",
+    custom_shelf_title: "Custom shelf",
+    shelf_name_label: "Shelf naam",
+    custom_shelf_name_placeholder: "bijv. UX",
+    shelf_desc_label: "Beschrijving",
+    custom_shelf_desc_placeholder: "bijv. UX woorden",
+    level_label: "Niveau",
+    level_mixed: "Gemengd",
+    level_beginner: "Beginner",
+    level_intermediate: "Gemiddeld",
+    level_advanced: "Gevorderd",
+    words_language_label: "Woorden taal",
+    word_count_label: "Aantal woorden",
+    custom_shelf_create: "Maak shelf en voeg woorden toe",
+    custom_shelf_hint: "API-sleutel is vereist voor een custom shelf.",
+    api_test_btn: "Test",
+    api_test_all_btn: "Test alle modellen",
+    error_guide_title: "Foutcodes",
+    error_429: "Quota of limiet overschreden.",
+    error_401: "Ongeldige API-sleutel of geen toegang.",
+    error_400: "Ongeldig verzoek of ontbrekende invoer.",
+    error_500: "Interne servicefout. Probeer later opnieuw.",
+    update_title: "App bijwerken",
+    update_text:
+      "Klik op de knop om de nieuwste bestanden op te halen. Je instellingen en woorden blijven behouden.",
+    update_btn: "Bijwerken",
+    move_shelf_label: "Verplaats naar shelf",
+    apply_btn: "Toepassen",
     search_settings_title: "Zoekinstellingen",
     search_suggest_label: "Toon toevoeg-voorstel in zoeken",
     search_sync_toggle_label: "Toon sync-schakelaar in zoeken",
@@ -501,6 +682,7 @@ const I18N = {
       "Dagelijkse limiet van Google free tier is ongeveer 1400 woorden. We adviseren de helft.",
     offline_language: "Database taal",
     offline_topic: "Onderwerp",
+    offline_topic_placeholder: "Algemene woordenschat",
     offline_level: "Niveau",
     offline_target: "Doelaantal",
     offline_max_minutes: "Max tijd (minuten)",
@@ -535,6 +717,10 @@ const I18N = {
     cards_import_hint: "Formaat: array kaarten met word veld. Dubbelen worden overgeslagen.",
     theme_title: "Uiterlijk",
     card_theme_title: "Kaartthema",
+    card_theme_inherit: "Volg app-thema",
+    card_title_color_label: "Titelkleur",
+    card_text_color_label: "Hoofdtekstkleur",
+    card_bg_color_label: "Kaart achtergrond",
     card_preview_hint: "Voorbeeld kaart",
     practice_settings_title: "Oefeninstellingen",
     sticky_buttons_label: "Oefenknoppen onderaan vastzetten",
@@ -762,7 +948,8 @@ function init() {
       state.settings.search?.syncOnAddDefault ?? false;
   }
   if (elements.offlineTopic) {
-    elements.offlineTopic.value = state.settings.offlineBuilder?.topic || "";
+    elements.offlineTopic.value =
+      state.settings.offlineBuilder?.topic || t("offline_topic_placeholder");
   }
   if (elements.offlineLevel) {
     elements.offlineLevel.value = state.settings.offlineBuilder?.level || "mixed";
@@ -962,7 +1149,7 @@ function wireEvents() {
         const shelfId = elements.copyShelfSelect?.value;
         const shelf = state.settings.shelves.find((item) => item.id === shelfId);
         if (!shelf) {
-          setStatus("شلف پیدا نشد.");
+        setStatus(t("copy_no_shelf"));
           return;
         }
         words = state.words
@@ -972,17 +1159,17 @@ function wireEvents() {
         words = state.words.map((word) => word.word);
       }
       if (!words.length) {
-        setStatus("لغتی برای کپی وجود ندارد.");
+        setStatus(t("copy_empty"));
         return;
       }
       const payload = words.join("\n");
       navigator.clipboard
         .writeText(payload)
         .then(() => {
-          setStatus("لغات کپی شد.");
+          setStatus(t("copy_done"));
         })
         .catch(() => {
-          setStatus("کپی انجام نشد.");
+          setStatus(t("copy_fail"));
         });
     });
   }
@@ -1733,7 +1920,7 @@ function renderShelfList() {
     const actions = document.createElement("div");
     actions.className = "shelf-actions";
     const removeButton = document.createElement("button");
-    removeButton.textContent = "حذف";
+    removeButton.textContent = t("remove_btn");
     removeButton.disabled = shelf.id === "default";
     removeButton.addEventListener("click", () => {
       const count = state.words.filter((word) => word.shelfId === shelf.id).length;
@@ -2781,7 +2968,7 @@ async function addWordsWithCorrection(list, shelfId = getActiveShelfId()) {
 function renderWords() {
   renderShelfCards();
   if (!state.words.length) {
-    elements.wordList.innerHTML = "<p class='empty-state'>هیچ لغتی وجود ندارد.</p>";
+    elements.wordList.innerHTML = `<p class='empty-state'>${t("empty_words")}</p>`;
     return;
   }
   const activeShelfId = getActiveShelfId();
@@ -2809,7 +2996,7 @@ function renderWords() {
   if (!visibleWords.length) {
     elements.wordList.innerHTML = isSearching
       ? `<p class='empty-state'>${t("search_empty")}</p>`
-      : "<p class='empty-state'>در این شلف لغتی وجود ندارد.</p>";
+      : `<p class='empty-state'>${t("empty_shelf")}</p>`;
     return;
   }
   elements.wordList.innerHTML = "";
@@ -3328,7 +3515,7 @@ async function loadModelsList(showMessage = false) {
       .map((model) => model.name?.replace("models/", ""))
       .filter(Boolean);
     if (!models.length) {
-      if (showMessage) setModelStatus("مدلی یافت نشد.");
+    if (showMessage) setModelStatus(t("model_not_found"));
       return;
     }
     elements.modelName.innerHTML = "";
@@ -3347,7 +3534,7 @@ async function loadModelsList(showMessage = false) {
     }
     state.settings.model = elements.modelName.value;
     saveState();
-    if (showMessage) setModelStatus("مدل‌ها به‌روزرسانی شد.");
+    if (showMessage) setModelStatus(t("model_updated"));
   } catch (error) {
     console.error(error);
     if (showMessage) setModelStatus(error.message || t("sync_error"));
@@ -3823,7 +4010,7 @@ function showToast(message) {
 
 async function forceAppUpdate() {
   try {
-    setUpdateStatus("در حال بروزرسانی...");
+    setUpdateStatus(t("update_in_progress"));
     if ("caches" in window) {
       const keys = await caches.keys();
       await Promise.all(keys.map((key) => caches.delete(key)));
