@@ -335,12 +335,34 @@
           <h2 data-i18n="language_label">زبان</h2>
           <label class="field">
             <span data-i18n="language_label">زبان</span>
-            <select id="languageSelect">
-              <option value="fa">فارسی</option>
-              <option value="en">English</option>
-              <option value="nl">Nederlands</option>
-            </select>
+            <select id="languageSelect"></select>
           </label>
+          <div class="row">
+            <button id="downloadLangTemplate" class="icon-button" data-i18n="lang_download_template">
+              دانلود قالب ترجمه
+            </button>
+            <button id="downloadLangFa" class="icon-button" data-i18n="lang_download_fa">
+              دانلود فارسی
+            </button>
+            <button id="downloadLangEn" class="icon-button" data-i18n="lang_download_en">
+              دانلود انگلیسی
+            </button>
+          </div>
+          <div class="row">
+            <input id="langCode" type="text" placeholder="fr" data-i18n-placeholder="lang_code_placeholder" />
+            <input id="langName" type="text" placeholder="Français" data-i18n-placeholder="lang_name_placeholder" />
+            <select id="langDir">
+              <option value="ltr">LTR</option>
+              <option value="rtl">RTL</option>
+            </select>
+          </div>
+          <div class="row">
+            <input type="file" id="langFile" accept="application/json" />
+            <button id="langAdd" data-i18n="lang_add_btn">افزودن زبان</button>
+          </div>
+          <p class="hint" data-i18n="lang_upload_hint">
+            فایل ترجمه را آپلود کنید تا زبان جدید به برنامه اضافه شود.
+          </p>
         </div>
 
         <div class="card settings-page" data-settings-page="drive">

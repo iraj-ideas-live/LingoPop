@@ -32,6 +32,7 @@ const defaultState = {
       allowSyncToggle: true,
       syncOnAddDefault: false,
     },
+    customLanguages: [],
     offlineBuilder: {
       languages: ["fa", "en", "nl"],
       targetCount: 500,
@@ -190,6 +191,14 @@ const I18N = {
     update_btn: "بروزرسانی",
     move_shelf_label: "انتقال به شلف",
     apply_btn: "اعمال",
+    lang_download_template: "دانلود قالب ترجمه",
+    lang_download_fa: "دانلود فارسی",
+    lang_download_en: "دانلود انگلیسی",
+    lang_code_placeholder: "کد زبان (مثل fr)",
+    lang_name_placeholder: "نام زبان (مثل Français)",
+    lang_add_btn: "افزودن زبان",
+    lang_upload_hint:
+      "یک فایل ترجمه JSON آپلود کنید تا زبان جدید اضافه شود.",
     search_settings_title: "تنظیمات جست‌وجو",
     search_suggest_label: "نمایش پیشنهاد افزودن در جست‌وجو",
     search_sync_toggle_label: "نمایش سوییچ سینک در جست‌وجو",
@@ -431,6 +440,14 @@ const I18N = {
     update_btn: "Update",
     move_shelf_label: "Move to shelf",
     apply_btn: "Apply",
+    lang_download_template: "Download translation template",
+    lang_download_fa: "Download Persian",
+    lang_download_en: "Download English",
+    lang_code_placeholder: "Language code (e.g. fr)",
+    lang_name_placeholder: "Language name (e.g. Français)",
+    lang_add_btn: "Add language",
+    lang_upload_hint:
+      "Upload a JSON translation file to add a new language.",
     search_settings_title: "Search Settings",
     search_suggest_label: "Show add suggestion in search",
     search_sync_toggle_label: "Show sync toggle in search",
@@ -671,6 +688,14 @@ const I18N = {
     update_btn: "Bijwerken",
     move_shelf_label: "Verplaats naar shelf",
     apply_btn: "Toepassen",
+    lang_download_template: "Download vertaalsjabloon",
+    lang_download_fa: "Download Perzisch",
+    lang_download_en: "Download Engels",
+    lang_code_placeholder: "Taalcode (bijv. fr)",
+    lang_name_placeholder: "Taalnaam (bijv. Français)",
+    lang_add_btn: "Taal toevoegen",
+    lang_upload_hint:
+      "Upload een JSON-vertaalbestand om een nieuwe taal toe te voegen.",
     search_settings_title: "Zoekinstellingen",
     search_suggest_label: "Toon toevoeg-voorstel in zoeken",
     search_sync_toggle_label: "Toon sync-schakelaar in zoeken",
@@ -796,10 +821,87 @@ const I18N = {
   },
 };
 
+const I18N_META = {
+  fa: { name: "فارسی", dir: "rtl" },
+  en: { name: "English", dir: "ltr" },
+  nl: { name: "Nederlands", dir: "ltr" },
+};
+
 function t(key, vars = {}) {
   const lang = state.settings.language || "fa";
   const template = I18N[lang]?.[key] || I18N.fa[key] || key;
   return template.replace(/\{(\w+)\}/g, (_, name) => vars[name] ?? "");
+}
+
+function getLanguageMeta(code) {
+  if (state.settings.customLanguages?.length) {
+    const custom = state.settings.customLanguages.find((lang) => lang.code === code);
+    if (custom) {
+      return { name: custom.name || code, dir: custom.dir || "ltr" };
+    }
+  }
+  return I18N_META[code] || { name: code, dir: "ltr" };
+}
+
+function getLanguageList() {
+  const base = Object.keys(I18N_META).map((code) => ({
+    code,
+    name: I18N_META[code]?.name || code,
+    dir: I18N_META[code]?.dir || "ltr",
+    isCustom: false,
+  }));
+  const custom = (state.settings.customLanguages || []).map((lang) => ({
+    code: lang.code,
+    name: lang.name || lang.code,
+    dir: lang.dir || "ltr",
+    isCustom: true,
+  }));
+  return [...base, ...custom];
+}
+
+function applyCustomLanguages() {
+  (state.settings.customLanguages || []).forEach((lang) => {
+    if (!lang?.code || !lang?.strings) return;
+    I18N[lang.code] = { ...(I18N[lang.code] || {}), ...lang.strings };
+    I18N_META[lang.code] = {
+      name: lang.name || lang.code,
+      dir: lang.dir || "ltr",
+    };
+  });
+}
+
+function renderLanguageOptions() {
+  const list = getLanguageList();
+  if (!list.some((item) => item.code === (state.settings.language || "fa"))) {
+    state.settings.language = list[0]?.code || "fa";
+    saveState();
+  }
+  const fillSelect = (select, current) => {
+    if (!select) return;
+    select.innerHTML = "";
+    list.forEach((lang) => {
+      const option = document.createElement("option");
+      option.value = lang.code;
+      option.textContent = lang.name;
+      select.appendChild(option);
+    });
+    if (list.some((item) => item.code === current)) {
+      select.value = current;
+    } else if (list.length) {
+      select.value = list[0].code;
+    }
+  };
+  fillSelect(elements.languageSelect, state.settings.language || "fa");
+  if (
+    !list.some(
+      (item) => item.code === (state.settings.practiceLanguage || "fa")
+    )
+  ) {
+    state.settings.practiceLanguage = state.settings.language || "fa";
+    saveState();
+  }
+  fillSelect(elements.practiceLanguage, state.settings.practiceLanguage || "fa");
+  fillSelect(elements.customShelfLanguage, state.settings.language || "fa");
 }
 
 const elements = {
@@ -860,6 +962,14 @@ const elements = {
   apiTestAll: document.getElementById("apiTestAll"),
   apiTestAllStatus: document.getElementById("apiTestAllStatus"),
   languageSelect: document.getElementById("languageSelect"),
+  downloadLangTemplate: document.getElementById("downloadLangTemplate"),
+  downloadLangFa: document.getElementById("downloadLangFa"),
+  downloadLangEn: document.getElementById("downloadLangEn"),
+  langCode: document.getElementById("langCode"),
+  langName: document.getElementById("langName"),
+  langDir: document.getElementById("langDir"),
+  langFile: document.getElementById("langFile"),
+  langAdd: document.getElementById("langAdd"),
   saveSettings: document.getElementById("saveSettings"),
   forceUpdate: document.getElementById("forceUpdate"),
   updateStatus: document.getElementById("updateStatus"),
@@ -933,9 +1043,8 @@ function init() {
   if (elements.cooldownSeconds) {
     elements.cooldownSeconds.value = String(state.settings.cooldownSeconds ?? 2);
   }
-  if (elements.languageSelect) {
-    elements.languageSelect.value = state.settings.language || "fa";
-  }
+  applyCustomLanguages();
+  renderLanguageOptions();
   if (elements.searchSuggestAdd) {
     elements.searchSuggestAdd.checked = state.settings.search?.suggestAdd ?? true;
   }
@@ -989,9 +1098,6 @@ function init() {
   }
   if (state.settings.offlineBuilder?.running) {
     state.settings.offlineBuilder.running = false;
-  }
-  if (elements.customShelfLanguage) {
-    elements.customShelfLanguage.value = state.settings.language || "fa";
   }
   if (elements.apiKey.value) {
     loadModelsList();
@@ -1522,6 +1628,50 @@ function wireEvents() {
     });
   }
 
+  if (elements.downloadLangTemplate) {
+    elements.downloadLangTemplate.addEventListener("click", () => {
+      downloadTranslationTemplate();
+    });
+  }
+
+  if (elements.downloadLangFa) {
+    elements.downloadLangFa.addEventListener("click", () => {
+      downloadLanguageFile("fa", "lingopop-fa.json");
+    });
+  }
+
+  if (elements.downloadLangEn) {
+    elements.downloadLangEn.addEventListener("click", () => {
+      downloadLanguageFile("en", "lingopop-en.json");
+    });
+  }
+
+  if (elements.langAdd) {
+    elements.langAdd.addEventListener("click", () => {
+      if (!elements.langFile?.files?.length) {
+        setStatus(t("json_select_file"));
+        return;
+      }
+      const file = elements.langFile.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          const meta = data.meta || data;
+          const code = elements.langCode?.value?.trim() || meta.code;
+          const name = elements.langName?.value?.trim() || meta.name;
+          const dir = elements.langDir?.value || meta.dir || "ltr";
+          const strings = data.strings || meta.strings || {};
+          addCustomLanguage({ code, name, dir, strings });
+          setStatus(t("settings_saved"));
+        } catch (error) {
+          setStatus(t("json_invalid"));
+        }
+      };
+      reader.readAsText(file);
+    });
+  }
+
   if (elements.searchSuggestAdd) {
     elements.searchSuggestAdd.addEventListener("change", (event) => {
       state.settings.search.suggestAdd = event.target.checked;
@@ -1677,7 +1827,7 @@ function getDefaultShelfName() {
 
 function applyLanguage() {
   const lang = state.settings.language || "fa";
-  const dir = lang === "fa" ? "rtl" : "ltr";
+  const dir = getLanguageMeta(lang).dir || "ltr";
   document.documentElement.lang = lang;
   document.documentElement.dir = dir;
   document.querySelectorAll("[data-i18n]").forEach((element) => {
@@ -1688,9 +1838,10 @@ function applyLanguage() {
     const key = element.dataset.i18nPlaceholder;
     element.placeholder = t(key);
   });
+  const isRtl = getLanguageMeta(lang).dir === "rtl";
   document.querySelectorAll("[data-dir='target']").forEach((element) => {
-    element.classList.toggle("dir-rtl", lang === "fa");
-    element.classList.toggle("dir-ltr", lang !== "fa");
+    element.classList.toggle("dir-rtl", isRtl);
+    element.classList.toggle("dir-ltr", !isRtl);
   });
   document.querySelectorAll("[data-show-english]").forEach((element) => {
     element.classList.toggle("hidden", lang === "en");
@@ -1699,14 +1850,14 @@ function applyLanguage() {
 }
 
 function getLanguageName(lang) {
-  if (lang === "en") return "English";
-  if (lang === "nl") return "Dutch";
-  return "Persian";
+  const meta = getLanguageMeta(lang || "fa");
+  return meta.name || lang || "Unknown";
 }
 
 function getTargetDirClass() {
   const lang = state.settings.language || "fa";
-  return lang === "fa" ? "dir-rtl" : "dir-ltr";
+  const meta = getLanguageMeta(lang);
+  return meta.dir === "rtl" ? "dir-rtl" : "dir-ltr";
 }
 
 function getTargetMeaning(item) {
@@ -1726,7 +1877,8 @@ function shouldShowEnglishMeaning() {
 
 function getPracticeDirClass() {
   const lang = state.settings.practiceLanguage || state.settings.language || "fa";
-  return lang === "fa" ? "dir-rtl" : "dir-ltr";
+  const meta = getLanguageMeta(lang);
+  return meta.dir === "rtl" ? "dir-rtl" : "dir-ltr";
 }
 
 function getPracticeMeaning(item) {
@@ -1980,6 +2132,61 @@ function clampNumber(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
+function downloadTranslationTemplate() {
+  const keys = Object.keys(I18N.fa || {});
+  const emptyStrings = keys.reduce((acc, key) => {
+    acc[key] = "";
+    return acc;
+  }, {});
+  const payload = {
+    meta: { code: "fr", name: "Français", dir: "ltr" },
+    strings: emptyStrings,
+    reference: {
+      fa: I18N.fa,
+      en: I18N.en,
+    },
+  };
+  downloadFile(
+    JSON.stringify(payload, null, 2),
+    "lingopop-translation-template.json",
+    "application/json"
+  );
+}
+
+function downloadLanguageFile(code, filename) {
+  const payload = {
+    meta: {
+      code,
+      name: getLanguageMeta(code).name,
+      dir: getLanguageMeta(code).dir,
+    },
+    strings: I18N[code] || {},
+  };
+  downloadFile(JSON.stringify(payload, null, 2), filename, "application/json");
+}
+
+function addCustomLanguage({ code, name, dir, strings }) {
+  if (!code || typeof strings !== "object") {
+    throw new Error("Invalid language file");
+  }
+  const normalizedCode = code.trim().toLowerCase();
+  const normalizedName = (name || normalizedCode).trim();
+  const normalizedDir = dir === "rtl" ? "rtl" : "ltr";
+  const entry = {
+    code: normalizedCode,
+    name: normalizedName,
+    dir: normalizedDir,
+    strings,
+  };
+  state.settings.customLanguages = (state.settings.customLanguages || []).filter(
+    (lang) => lang.code !== normalizedCode
+  );
+  state.settings.customLanguages.push(entry);
+  applyCustomLanguages();
+  renderLanguageOptions();
+  saveState();
+}
+
 function incrementSessionApiCount(count) {
   const inc = Number.isFinite(count) ? count : 0;
   state.session.apiProcessedCount = (state.session.apiProcessedCount || 0) + inc;
@@ -2147,9 +2354,8 @@ function getOfflineShelfName(language) {
 }
 
 function getOfflineLanguages() {
-  const langs = state.settings.offlineBuilder?.languages;
-  if (Array.isArray(langs) && langs.length) return langs;
-  return ["fa", "en", "nl"];
+  const list = getLanguageList().map((lang) => lang.code);
+  return list.length ? list : ["fa", "en", "nl"];
 }
 
 function countWordsInShelf(shelfId) {
