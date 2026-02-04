@@ -33,20 +33,22 @@ const defaultState = {
       syncOnAddDefault: false,
     },
     offlineBuilder: {
-      language: "en",
+      languages: ["fa", "en", "nl"],
       targetCount: 500,
       processedCount: 0,
+      processedByLang: {},
       shelfId: "",
       running: false,
       avgBatchMs: 0,
       lastBatchSize: 0,
       lastUpdatedAt: "",
-      topic: "",
+      topic: "general vocabulary",
       level: "mixed",
       maxMinutes: 0,
       dailyLimit: 700,
       sessionProcessed: 0,
       runStartedAt: "",
+      currentLangIndex: 0,
     },
     shelves: [
       { id: "default", name: "تمامی لغات", description: "", isDefault: true },
@@ -713,7 +715,6 @@ const elements = {
   searchSuggestAdd: document.getElementById("searchSuggestAdd"),
   searchAllowSync: document.getElementById("searchAllowSync"),
   searchSyncDefault: document.getElementById("searchSyncDefault"),
-  offlineLanguage: document.getElementById("offlineLanguage"),
   offlineTopic: document.getElementById("offlineTopic"),
   offlineLevel: document.getElementById("offlineLevel"),
   offlineTarget: document.getElementById("offlineTarget"),
@@ -759,10 +760,6 @@ function init() {
   if (elements.searchSyncDefault) {
     elements.searchSyncDefault.checked =
       state.settings.search?.syncOnAddDefault ?? false;
-  }
-  if (elements.offlineLanguage) {
-    elements.offlineLanguage.value =
-      state.settings.offlineBuilder?.language || "en";
   }
   if (elements.offlineTopic) {
     elements.offlineTopic.value = state.settings.offlineBuilder?.topic || "";
@@ -1023,14 +1020,6 @@ function wireEvents() {
   if (elements.offlinePause) {
     elements.offlinePause.addEventListener("click", () => {
       pauseOfflineBuilder();
-    });
-  }
-
-  if (elements.offlineLanguage) {
-    elements.offlineLanguage.addEventListener("change", (event) => {
-      state.settings.offlineBuilder.language = event.target.value;
-      saveState();
-      renderOfflineBuilder();
     });
   }
 
@@ -1917,7 +1906,7 @@ function formatDuration(ms) {
 function renderOfflineBuilder() {
   if (!elements.offlineProgressFill || !elements.offlineStatus) return;
   const builder = state.settings.offlineBuilder;
-  const target = builder.targetCount || 0;
+  const target = (builder.targetCount || 0) * getOfflineLanguages().length;
   const processed = builder.processedCount || 0;
   const percent = target ? Math.min(100, Math.round((processed / target) * 100)) : 0;
   elements.offlineProgressFill.style.width = `${percent}%`;
@@ -1970,6 +1959,12 @@ function getOfflineShelfName(language) {
   return `Offline DB (${langName})`;
 }
 
+function getOfflineLanguages() {
+  const langs = state.settings.offlineBuilder?.languages;
+  if (Array.isArray(langs) && langs.length) return langs;
+  return ["fa", "en", "nl"];
+}
+
 function countWordsInShelf(shelfId) {
   return state.words.filter((word) => (word.shelfId || "default") === shelfId)
     .length;
@@ -1978,7 +1973,6 @@ function countWordsInShelf(shelfId) {
 function startOfflineBuilder() {
   const builder = state.settings.offlineBuilder;
   if (!builder) return;
-  const language = elements.offlineLanguage?.value || builder.language || "en";
   const topic = elements.offlineTopic?.value || builder.topic || "";
   const level = elements.offlineLevel?.value || builder.level || "mixed";
   const targetRaw = parseInt(elements.offlineTarget?.value, 10);
@@ -1999,16 +1993,22 @@ function startOfflineBuilder() {
     200,
     1400
   );
-  builder.language = language;
+  builder.languages = getOfflineLanguages();
   builder.topic = topic;
   builder.level = level;
   builder.targetCount = targetCount;
   builder.maxMinutes = maxMinutes;
   builder.dailyLimit = dailyLimit;
-  const shelfName = getOfflineShelfName(language);
-  const shelf = getOrCreateShelfByName(shelfName, "Offline database");
-  builder.shelfId = shelf.id;
-  builder.processedCount = countWordsInShelf(shelf.id);
+  builder.processedByLang = builder.processedByLang || {};
+  let totalProcessed = 0;
+  getOfflineLanguages().forEach((lang) => {
+    const shelfName = getOfflineShelfName(lang);
+    const shelf = getOrCreateShelfByName(shelfName, "Offline database");
+    const count = countWordsInShelf(shelf.id);
+    builder.processedByLang[lang] = count;
+    totalProcessed += count;
+  });
+  builder.processedCount = totalProcessed;
   builder.sessionProcessed = 0;
   builder.running = true;
   builder.runStartedAt = new Date().toISOString();
@@ -2037,7 +2037,8 @@ async function runOfflineBuilderLoop() {
     const builder = state.settings.offlineBuilder;
     let emptyRounds = 0;
     while (builder.running) {
-      const target = builder.targetCount || 0;
+      const perLangTarget = builder.targetCount || 0;
+      const target = perLangTarget * getOfflineLanguages().length;
       if (builder.processedCount >= target && target > 0) {
         builder.running = false;
         saveState();
@@ -2058,7 +2059,10 @@ async function runOfflineBuilderLoop() {
           break;
         }
       }
-      if (builder.sessionProcessed >= builder.dailyLimit || isSessionLimitReached(1400)) {
+      if (
+        builder.sessionProcessed >= builder.dailyLimit ||
+        isSessionLimitReached(1400)
+      ) {
         builder.running = false;
         builder.lastUpdatedAt = new Date().toISOString();
         saveState();
@@ -2066,14 +2070,27 @@ async function runOfflineBuilderLoop() {
         if (elements.offlineStatus) {
           elements.offlineStatus.textContent = t("offline_status_daily_limit");
         }
-    setStatus(t("daily_limit_warning"));
+        setStatus(t("daily_limit_warning"));
         break;
       }
 
+      const languages = getOfflineLanguages();
+      const langIndex = builder.currentLangIndex % languages.length;
+      const language = languages[langIndex];
+      builder.currentLangIndex = (langIndex + 1) % languages.length;
+      const remainingForLang = Math.max(
+        0,
+        perLangTarget - (builder.processedByLang[language] || 0)
+      );
+      if (remainingForLang === 0) {
+        continue;
+      }
       const batchSize = Math.min(
         state.settings.syncBatchSize || 20,
-        Math.max(1, target - builder.processedCount)
+        Math.max(1, remainingForLang)
       );
+      const shelfName = getOfflineShelfName(language);
+      const shelf = getOrCreateShelfByName(shelfName, "Offline database");
       const start = Date.now();
       let words = [];
       try {
@@ -2081,7 +2098,7 @@ async function runOfflineBuilderLoop() {
           builder.topic || "general vocabulary",
           builder.level || "mixed",
           batchSize,
-          builder.language
+          language
         );
       } catch (error) {
         console.error(error);
@@ -2123,12 +2140,14 @@ async function runOfflineBuilderLoop() {
           pronunciation: entry.pronunciation || "",
           example: entry.example || "",
           synonyms: Array.isArray(entry.synonyms) ? entry.synonyms : [],
-          shelfId: builder.shelfId,
+          shelfId: shelf.id,
         }));
-        const result = addCardsFromJson(prepared, builder.shelfId);
+        const result = addCardsFromJson(prepared, shelf.id);
         builder.processedCount += result.added || 0;
         builder.sessionProcessed += result.added || 0;
         incrementSessionApiCount(result.added || 0);
+        builder.processedByLang[language] =
+          (builder.processedByLang[language] || 0) + (result.added || 0);
       } catch (error) {
         console.error(error);
         builder.running = false;
