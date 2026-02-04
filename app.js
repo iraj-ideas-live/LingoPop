@@ -255,7 +255,7 @@ const I18N = {
     sticky_buttons_label: "چسباندن دکمه‌های تمرین در پایین صفحه",
     about_title: "درباره نرم‌افزار",
     about_text:
-      "LingoPop یک برنامه سبک برای مدیریت لغت و کارت‌های آموزشی است. لغت‌ها را دستی یا با فایل JSON وارد کنید، با Google API معنی، تلفظ، مثال و هم‌معنی‌ها را بسازید و با جعبه‌های G5 تمرین کنید. می‌توانید شلف‌ها بسازید، بین شلف‌ها جابه‌جا کنید، خروجی بگیرید و با Google Drive سینک کنید. همه داده‌ها به‌صورت محلی ذخیره می‌شوند.",
+      "LingoPop یک برنامه سبک برای مدیریت لغت و کارت‌های آموزشی است. مزیت‌ها: ساخت خودکار معنی، تلفظ، مثال و هم‌معنی با Google API، تمرین هوشمند با جعبه‌های G5، شلف‌بندی و جست‌وجوی سریع، خروجی/ورودی کامل، همگام‌سازی با Google Drive و ساخت دیتابیس آفلاین. همه داده‌ها به‌صورت محلی ذخیره می‌شوند.",
     meaning_target: "معنی:",
     meaning_english: "معنی انگلیسی:",
     pronunciation: "تلفظ:",
@@ -503,7 +503,7 @@ const I18N = {
     sticky_buttons_label: "Stick practice buttons to bottom",
     about_title: "About",
     about_text:
-      "LingoPop is a lightweight app for vocabulary cards and G5 practice. Add words manually or via JSON, generate meanings, pronunciation, examples, and synonyms with Google API, practice with G5 boxes, organize shelves, export/import, and sync with Google Drive. All data is stored locally.",
+      "LingoPop is a lightweight app for vocabulary cards and G5 practice. Key benefits: automatic meanings, pronunciation, examples, and synonyms via Google API, smart G5 practice, shelves and fast search, full import/export, Google Drive sync, and offline database building. All data is stored locally.",
     meaning_target: "Meaning:",
     meaning_english: "English meaning:",
     pronunciation: "Pronunciation:",
@@ -751,7 +751,7 @@ const I18N = {
     sticky_buttons_label: "Oefenknoppen onderaan vastzetten",
     about_title: "Over",
     about_text:
-      "LingoPop is een lichte app voor woordkaarten en G5-oefenen. Voeg woorden handmatig of via JSON toe, maak betekenissen, uitspraak, voorbeelden en synoniemen met Google API, oefen met G5-boxen, beheer shelves, exporteer/importeer en synchroniseer met Google Drive. Alle data wordt lokaal opgeslagen.",
+      "LingoPop is een lichte app voor woordkaarten en G5-oefenen. Belangrijke voordelen: automatische betekenissen, uitspraak, voorbeelden en synoniemen via Google API, slim oefenen met G5-boxen, shelves en snelle zoekfunctie, volledige import/export, Google Drive sync en offline database opbouw. Alle data wordt lokaal opgeslagen.",
     meaning_target: "Betekenis:",
     meaning_english: "Engelse betekenis:",
     pronunciation: "Uitspraak:",
