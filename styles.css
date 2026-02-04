@@ -720,6 +720,11 @@ button.primary {
   transition: width 0.3s ease;
 }
 
+.field input[type="range"] {
+  width: 100%;
+  margin-top: 8px;
+}
+
 .shelf-select {
   min-width: 140px;
 }

@@ -6,6 +6,10 @@ const defaultState = {
     searchQuery: "",
     searchOpen: false,
   },
+  session: {
+    apiProcessedCount: 0,
+    startedAt: "",
+  },
   settings: {
     apiKey: "",
     model: "gemini-flash-latest",
@@ -37,6 +41,12 @@ const defaultState = {
       avgBatchMs: 0,
       lastBatchSize: 0,
       lastUpdatedAt: "",
+      topic: "",
+      level: "mixed",
+      maxMinutes: 0,
+      dailyLimit: 700,
+      sessionProcessed: 0,
+      runStartedAt: "",
     },
     shelves: [
       { id: "default", name: "تمامی لغات", description: "", isDefault: true },
@@ -128,18 +138,32 @@ const I18N = {
     offline_title: "دیتابیس آفلاین",
     offline_hint:
       "برای ساخت دیتابیس آفلاین، برنامه باید باز بماند. می‌توانید هر زمان ادامه بدهید.",
+    offline_free_tier:
+      "محدودیت روزانه نسخه رایگان گوگل حدود ۱۴۰۰ لغت است. پیشنهاد ما نصف این مقدار است.",
     offline_language: "زبان دیتابیس",
+    offline_topic: "موضوع",
+    offline_level: "سطح",
     offline_target: "تعداد هدف",
+    offline_max_minutes: "حداکثر زمان (دقیقه)",
+    offline_daily_limit: "حد هشدار روزانه",
     offline_start: "شروع / ادامه",
     offline_pause: "توقف",
     offline_status_idle: "آماده",
     offline_status_running: "در حال ساخت دیتابیس...",
     offline_status_done: "دیتابیس کامل شد.",
+    offline_status_paused: "متوقف شد.",
+    offline_status_time_limit: "سقف زمان رسید. بعدا ادامه دهید.",
+    offline_status_daily_limit:
+      "شما به محدودیت روزانه نزدیک شدید. فردا ادامه دهید.",
+    offline_resume: "ادامه از لغت {count}...",
     offline_eta: "زمان تقریبی باقی‌مانده: {time}",
     sync_suggest_title: "پیشنهاد تنظیمات بهتر",
     sync_suggest_body:
       "به نظر می‌رسد تنظیمات فعلی مناسب نیست. پیشنهاد ما: بچ {batch} و کول‌دان {cooldown}s.",
     sync_suggest_apply: "اعمال پیشنهاد",
+    daily_limit_warning:
+      "شما به محدودیت روزانه نزدیک شدید. فردا ادامه دهید.",
+    sync_resume: "ادامه از لغت {count}...",
     words_shelf_export: "خروجی لغت‌ها با شلف",
     words_shelf_import: "ورود لغت‌ها با شلف",
     words_shelf_import_hint:
@@ -293,18 +317,32 @@ const I18N = {
     offline_title: "Offline Database",
     offline_hint:
       "Keep the app open to build the offline database. You can resume anytime.",
+    offline_free_tier:
+      "Google free tier daily limit is about 1400 words. We suggest half.",
     offline_language: "Database language",
+    offline_topic: "Topic",
+    offline_level: "Level",
     offline_target: "Target count",
+    offline_max_minutes: "Max time (minutes)",
+    offline_daily_limit: "Daily warning limit",
     offline_start: "Start / Resume",
     offline_pause: "Pause",
     offline_status_idle: "Ready",
     offline_status_running: "Building database...",
     offline_status_done: "Database complete.",
+    offline_status_paused: "Paused.",
+    offline_status_time_limit: "Time limit reached. Resume later.",
+    offline_status_daily_limit:
+      "You are approaching the daily limit. Continue tomorrow.",
+    offline_resume: "Resuming from word {count}...",
     offline_eta: "Estimated remaining: {time}",
     sync_suggest_title: "Suggested settings",
     sync_suggest_body:
       "Current settings may be too aggressive. Suggested: batch {batch} and cooldown {cooldown}s.",
     sync_suggest_apply: "Apply suggestion",
+    daily_limit_warning:
+      "You are approaching the daily limit. Continue tomorrow.",
+    sync_resume: "Resuming from word {count}...",
     words_shelf_export: "Export words with shelves",
     words_shelf_import: "Import words with shelves",
     words_shelf_import_hint:
@@ -457,18 +495,32 @@ const I18N = {
     offline_title: "Offline database",
     offline_hint:
       "Laat de app open om de offline database te bouwen. Je kunt later doorgaan.",
+    offline_free_tier:
+      "Dagelijkse limiet van Google free tier is ongeveer 1400 woorden. We adviseren de helft.",
     offline_language: "Database taal",
+    offline_topic: "Onderwerp",
+    offline_level: "Niveau",
     offline_target: "Doelaantal",
+    offline_max_minutes: "Max tijd (minuten)",
+    offline_daily_limit: "Dagelijkse waarschuwing",
     offline_start: "Start / Hervat",
     offline_pause: "Pauze",
     offline_status_idle: "Gereed",
     offline_status_running: "Database wordt gebouwd...",
     offline_status_done: "Database is compleet.",
+    offline_status_paused: "Gepauzeerd.",
+    offline_status_time_limit: "Tijdslimiet bereikt. Later hervatten.",
+    offline_status_daily_limit:
+      "Je nadert de dagelijkse limiet. Ga morgen verder.",
+    offline_resume: "Hervatten vanaf woord {count}...",
     offline_eta: "Geschatte resterende tijd: {time}",
     sync_suggest_title: "Voorgestelde instellingen",
     sync_suggest_body:
       "Huidige instellingen zijn mogelijk te agressief. Advies: batch {batch} en cooldown {cooldown}s.",
     sync_suggest_apply: "Advies toepassen",
+    daily_limit_warning:
+      "Je nadert de dagelijkse limiet. Ga morgen verder.",
+    sync_resume: "Hervatten vanaf woord {count}...",
     words_shelf_export: "Woorden met shelves exporteren",
     words_shelf_import: "Woorden met shelves importeren",
     words_shelf_import_hint:
@@ -662,7 +714,14 @@ const elements = {
   searchAllowSync: document.getElementById("searchAllowSync"),
   searchSyncDefault: document.getElementById("searchSyncDefault"),
   offlineLanguage: document.getElementById("offlineLanguage"),
+  offlineTopic: document.getElementById("offlineTopic"),
+  offlineLevel: document.getElementById("offlineLevel"),
   offlineTarget: document.getElementById("offlineTarget"),
+  offlineTargetRange: document.getElementById("offlineTargetRange"),
+  offlineMaxMinutes: document.getElementById("offlineMaxMinutes"),
+  offlineMaxMinutesRange: document.getElementById("offlineMaxMinutesRange"),
+  offlineDailyLimit: document.getElementById("offlineDailyLimit"),
+  offlineDailyLimitRange: document.getElementById("offlineDailyLimitRange"),
   offlineStart: document.getElementById("offlineStart"),
   offlinePause: document.getElementById("offlinePause"),
   offlineProgressFill: document.getElementById("offlineProgressFill"),
@@ -705,10 +764,44 @@ function init() {
     elements.offlineLanguage.value =
       state.settings.offlineBuilder?.language || "en";
   }
+  if (elements.offlineTopic) {
+    elements.offlineTopic.value = state.settings.offlineBuilder?.topic || "";
+  }
+  if (elements.offlineLevel) {
+    elements.offlineLevel.value = state.settings.offlineBuilder?.level || "mixed";
+  }
   if (elements.offlineTarget) {
     elements.offlineTarget.value = String(
       state.settings.offlineBuilder?.targetCount || 500
     );
+  }
+  if (elements.offlineTargetRange) {
+    elements.offlineTargetRange.value = String(
+      state.settings.offlineBuilder?.targetCount || 500
+    );
+  }
+  if (elements.offlineMaxMinutes) {
+    elements.offlineMaxMinutes.value = String(
+      state.settings.offlineBuilder?.maxMinutes || 0
+    );
+  }
+  if (elements.offlineMaxMinutesRange) {
+    elements.offlineMaxMinutesRange.value = String(
+      state.settings.offlineBuilder?.maxMinutes || 0
+    );
+  }
+  if (elements.offlineDailyLimit) {
+    elements.offlineDailyLimit.value = String(
+      state.settings.offlineBuilder?.dailyLimit || 700
+    );
+  }
+  if (elements.offlineDailyLimitRange) {
+    elements.offlineDailyLimitRange.value = String(
+      state.settings.offlineBuilder?.dailyLimit || 700
+    );
+  }
+  if (!state.session.startedAt) {
+    state.session.startedAt = new Date().toISOString();
   }
   if (state.settings.offlineBuilder?.running) {
     state.settings.offlineBuilder.running = false;
@@ -941,11 +1034,105 @@ function wireEvents() {
     });
   }
 
+  if (elements.offlineTopic) {
+    elements.offlineTopic.addEventListener("input", (event) => {
+      state.settings.offlineBuilder.topic = event.target.value;
+      saveState();
+    });
+  }
+
+  if (elements.offlineLevel) {
+    elements.offlineLevel.addEventListener("change", (event) => {
+      state.settings.offlineBuilder.level = event.target.value;
+      saveState();
+    });
+  }
+
   if (elements.offlineTarget) {
     elements.offlineTarget.addEventListener("input", (event) => {
       const raw = parseInt(event.target.value, 10);
       const normalized = Number.isFinite(raw) ? raw : 500;
       state.settings.offlineBuilder.targetCount = clampNumber(normalized, 100, 100000);
+      if (elements.offlineTargetRange) {
+        elements.offlineTargetRange.value = String(
+          state.settings.offlineBuilder.targetCount
+        );
+      }
+      saveState();
+      renderOfflineBuilder();
+    });
+  }
+
+  if (elements.offlineTargetRange) {
+    elements.offlineTargetRange.addEventListener("input", (event) => {
+      const raw = parseInt(event.target.value, 10);
+      const normalized = Number.isFinite(raw) ? raw : 500;
+      state.settings.offlineBuilder.targetCount = clampNumber(normalized, 100, 100000);
+      if (elements.offlineTarget) {
+        elements.offlineTarget.value = String(
+          state.settings.offlineBuilder.targetCount
+        );
+      }
+      saveState();
+      renderOfflineBuilder();
+    });
+  }
+
+  if (elements.offlineMaxMinutes) {
+    elements.offlineMaxMinutes.addEventListener("input", (event) => {
+      const raw = parseInt(event.target.value, 10);
+      const normalized = Number.isFinite(raw) ? raw : 0;
+      state.settings.offlineBuilder.maxMinutes = clampNumber(normalized, 0, 180);
+      if (elements.offlineMaxMinutesRange) {
+        elements.offlineMaxMinutesRange.value = String(
+          state.settings.offlineBuilder.maxMinutes
+        );
+      }
+      saveState();
+      renderOfflineBuilder();
+    });
+  }
+
+  if (elements.offlineMaxMinutesRange) {
+    elements.offlineMaxMinutesRange.addEventListener("input", (event) => {
+      const raw = parseInt(event.target.value, 10);
+      const normalized = Number.isFinite(raw) ? raw : 0;
+      state.settings.offlineBuilder.maxMinutes = clampNumber(normalized, 0, 180);
+      if (elements.offlineMaxMinutes) {
+        elements.offlineMaxMinutes.value = String(
+          state.settings.offlineBuilder.maxMinutes
+        );
+      }
+      saveState();
+      renderOfflineBuilder();
+    });
+  }
+
+  if (elements.offlineDailyLimit) {
+    elements.offlineDailyLimit.addEventListener("input", (event) => {
+      const raw = parseInt(event.target.value, 10);
+      const normalized = Number.isFinite(raw) ? raw : 700;
+      state.settings.offlineBuilder.dailyLimit = clampNumber(normalized, 200, 1400);
+      if (elements.offlineDailyLimitRange) {
+        elements.offlineDailyLimitRange.value = String(
+          state.settings.offlineBuilder.dailyLimit
+        );
+      }
+      saveState();
+      renderOfflineBuilder();
+    });
+  }
+
+  if (elements.offlineDailyLimitRange) {
+    elements.offlineDailyLimitRange.addEventListener("input", (event) => {
+      const raw = parseInt(event.target.value, 10);
+      const normalized = Number.isFinite(raw) ? raw : 700;
+      state.settings.offlineBuilder.dailyLimit = clampNumber(normalized, 200, 1400);
+      if (elements.offlineDailyLimit) {
+        elements.offlineDailyLimit.value = String(
+          state.settings.offlineBuilder.dailyLimit
+        );
+      }
       saveState();
       renderOfflineBuilder();
     });
@@ -1617,6 +1804,16 @@ function clampNumber(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
+function incrementSessionApiCount(count) {
+  const inc = Number.isFinite(count) ? count : 0;
+  state.session.apiProcessedCount = (state.session.apiProcessedCount || 0) + inc;
+  saveState();
+}
+
+function isSessionLimitReached(limit = 1400) {
+  return (state.session.apiProcessedCount || 0) >= limit;
+}
+
 let offlineBuilderLoopActive = false;
 
 function getSearchQuery() {
@@ -1724,6 +1921,21 @@ function renderOfflineBuilder() {
   const processed = builder.processedCount || 0;
   const percent = target ? Math.min(100, Math.round((processed / target) * 100)) : 0;
   elements.offlineProgressFill.style.width = `${percent}%`;
+  if (elements.offlineTargetRange && elements.offlineTarget) {
+    const value = String(builder.targetCount || 500);
+    elements.offlineTarget.value = value;
+    elements.offlineTargetRange.value = value;
+  }
+  if (elements.offlineMaxMinutesRange && elements.offlineMaxMinutes) {
+    const value = String(builder.maxMinutes || 0);
+    elements.offlineMaxMinutes.value = value;
+    elements.offlineMaxMinutesRange.value = value;
+  }
+  if (elements.offlineDailyLimitRange && elements.offlineDailyLimit) {
+    const value = String(builder.dailyLimit || 700);
+    elements.offlineDailyLimit.value = value;
+    elements.offlineDailyLimitRange.value = value;
+  }
   if (elements.offlineEta) {
     const batchSize = Math.max(1, builder.lastBatchSize || state.settings.syncBatchSize);
     const remaining = Math.max(0, target - processed);
@@ -1740,7 +1952,10 @@ function renderOfflineBuilder() {
   } else if (builder.running) {
     elements.offlineStatus.textContent = t("offline_status_running");
   } else {
-    elements.offlineStatus.textContent = t("offline_status_idle");
+    elements.offlineStatus.textContent =
+      builder.processedCount > 0
+        ? t("offline_resume", { count: builder.processedCount })
+        : t("offline_status_idle");
   }
   if (elements.offlineStart) {
     elements.offlineStart.disabled = builder.running;
@@ -1764,19 +1979,39 @@ function startOfflineBuilder() {
   const builder = state.settings.offlineBuilder;
   if (!builder) return;
   const language = elements.offlineLanguage?.value || builder.language || "en";
+  const topic = elements.offlineTopic?.value || builder.topic || "";
+  const level = elements.offlineLevel?.value || builder.level || "mixed";
   const targetRaw = parseInt(elements.offlineTarget?.value, 10);
   const targetCount = clampNumber(
     Number.isFinite(targetRaw) ? targetRaw : builder.targetCount || 500,
     100,
     100000
   );
+  const maxMinutesRaw = parseInt(elements.offlineMaxMinutes?.value, 10);
+  const maxMinutes = clampNumber(
+    Number.isFinite(maxMinutesRaw) ? maxMinutesRaw : builder.maxMinutes || 0,
+    0,
+    180
+  );
+  const dailyLimitRaw = parseInt(elements.offlineDailyLimit?.value, 10);
+  const dailyLimit = clampNumber(
+    Number.isFinite(dailyLimitRaw) ? dailyLimitRaw : builder.dailyLimit || 700,
+    200,
+    1400
+  );
   builder.language = language;
+  builder.topic = topic;
+  builder.level = level;
   builder.targetCount = targetCount;
+  builder.maxMinutes = maxMinutes;
+  builder.dailyLimit = dailyLimit;
   const shelfName = getOfflineShelfName(language);
   const shelf = getOrCreateShelfByName(shelfName, "Offline database");
   builder.shelfId = shelf.id;
   builder.processedCount = countWordsInShelf(shelf.id);
+  builder.sessionProcessed = 0;
   builder.running = true;
+  builder.runStartedAt = new Date().toISOString();
   builder.lastUpdatedAt = new Date().toISOString();
   saveState();
   renderOfflineBuilder();
@@ -1790,6 +2025,9 @@ function pauseOfflineBuilder() {
   builder.lastUpdatedAt = new Date().toISOString();
   saveState();
   renderOfflineBuilder();
+  if (elements.offlineStatus) {
+    elements.offlineStatus.textContent = t("offline_status_paused");
+  }
 }
 
 async function runOfflineBuilderLoop() {
@@ -1806,6 +2044,31 @@ async function runOfflineBuilderLoop() {
         renderOfflineBuilder();
         break;
       }
+      if (builder.maxMinutes > 0 && builder.runStartedAt) {
+        const elapsedMs =
+          Date.now() - new Date(builder.runStartedAt).getTime();
+        if (elapsedMs >= builder.maxMinutes * 60 * 1000) {
+          builder.running = false;
+          builder.lastUpdatedAt = new Date().toISOString();
+          saveState();
+          renderOfflineBuilder();
+          if (elements.offlineStatus) {
+            elements.offlineStatus.textContent = t("offline_status_time_limit");
+          }
+          break;
+        }
+      }
+      if (builder.sessionProcessed >= builder.dailyLimit || isSessionLimitReached(1400)) {
+        builder.running = false;
+        builder.lastUpdatedAt = new Date().toISOString();
+        saveState();
+        renderOfflineBuilder();
+        if (elements.offlineStatus) {
+          elements.offlineStatus.textContent = t("offline_status_daily_limit");
+        }
+    setStatus(t("daily_limit_warning"));
+        break;
+      }
 
       const batchSize = Math.min(
         state.settings.syncBatchSize || 20,
@@ -1815,8 +2078,8 @@ async function runOfflineBuilderLoop() {
       let words = [];
       try {
         words = await generateShelfWords(
-          "general vocabulary",
-          "mixed",
+          builder.topic || "general vocabulary",
+          builder.level || "mixed",
           batchSize,
           builder.language
         );
@@ -1826,6 +2089,9 @@ async function runOfflineBuilderLoop() {
         saveState();
         renderOfflineBuilder();
         break;
+      }
+      if (getCooldownSeconds() > 0) {
+        await sleep(getCooldownSeconds() * 1000);
       }
 
       const existing = new Set(state.words.map((word) => normalizeWord(word.word)));
@@ -1861,6 +2127,8 @@ async function runOfflineBuilderLoop() {
         }));
         const result = addCardsFromJson(prepared, builder.shelfId);
         builder.processedCount += result.added || 0;
+        builder.sessionProcessed += result.added || 0;
+        incrementSessionApiCount(result.added || 0);
       } catch (error) {
         console.error(error);
         builder.running = false;
@@ -2685,6 +2953,9 @@ async function syncAllWords() {
   elements.syncWords.classList.add("cooldown");
   hideSyncSuggestion();
   const previousProcessed = state.syncProgress?.processed || 0;
+  if (previousProcessed > 0) {
+    setStatus(t("sync_resume", { count: previousProcessed }));
+  }
   state.syncProgress = {
     total: previousProcessed + pending.length,
     processed: previousProcessed,
@@ -2706,6 +2977,9 @@ async function syncAllWords() {
         corrected.forEach((word, index) => {
           correctionMap.set(normalizeWord(chunk[index].word), word?.trim());
         });
+        if (getCooldownSeconds() > 0 && i + correctionBatchSize < pending.length) {
+          await sleep(getCooldownSeconds() * 1000);
+        }
       }
     } catch (error) {
       console.error(error);
@@ -2716,6 +2990,15 @@ async function syncAllWords() {
     for (let i = 0; i < pending.length; i += batchSize) {
       const chunk = pending.slice(i, i + batchSize);
       try {
+        if (isSessionLimitReached(1400)) {
+          syncOk = false;
+          showSyncSuggestion(
+            suggestSyncTuning().batch,
+            suggestSyncTuning().cooldown
+          );
+          setStatus(t("daily_limit_warning"));
+          break;
+        }
         const batchData = await generateCardBatchData(
           chunk.map((item) => item.word)
         );
@@ -2754,6 +3037,7 @@ async function syncAllWords() {
         processedCount += chunk.length;
         state.syncProgress.processed = previousProcessed + updatedCount;
         renderSyncProgress();
+        incrementSessionApiCount(updatedCount);
         saveState();
         renderWords();
         setStatus(
